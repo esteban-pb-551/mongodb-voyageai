@@ -6,7 +6,7 @@
 
 An async Rust client for the [VoyageAI](https://www.voyageai.com) API — generate embeddings and rerank documents with ease.
 
-> **Note:** This is a Rust port of the original [voyageai Ruby gem](https://github.com/ksylvest/voyageai) by [Kevin Sylvestre](https://github.com/ksylvest).
+> **Note:** Unofficial Voyage AI SDK for Rust. This is a Rust port of the original [voyageai Ruby gem](https://github.com/ksylvest/voyageai) by [Kevin Sylvestre](https://github.com/ksylvest).
 
 ## Installation
 
