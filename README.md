@@ -54,7 +54,7 @@ use mongodb_voyageai::{Client, Config};
 
 #[tokio::main]
 async fn main() -> Result<(), mongodb_voyageai::Error> {
-    let client = Client::with_api_key("pa-...")?;
+    let client = Client::new(&Config::new())?;
 
     let embed = client
         .embed(vec!["A quick brown fox jumps over the lazy dog.".into()], None, None, None, None)
@@ -75,7 +75,7 @@ use mongodb_voyageai::{Client, Config};
 
 #[tokio::main]
 async fn main() -> Result<(), mongodb_voyageai::Error> {
-    let client = Client::with_api_key("pa-...")?;
+    let client = Client::new(&Config::new())?;
 
     let input = vec![
         "John is a musician.".into(),
@@ -112,24 +112,36 @@ use mongodb_voyageai::{Client, Config};
 
 #[tokio::main]
 async fn main() -> Result<(), mongodb_voyageai::Error> {
-    let client = Client::with_api_key("pa-...")?;
+    let client = Client::new(&Config::new())?;
 
     let query = "Who is the best person to call for a toilet?";
 
     let documents = vec![
-        "John is a musician.".into(),
-        "Paul is a plumber.".into(),
-        "George is a teacher.".into(),
-        "Ringo is a doctor.".into(),
+        "John is a musician.",
+        "Paul is a plumber.",
+        "George is a teacher.",
+        "Ringo is a doctor.",
     ];
 
-    let rerank = client.rerank(query, documents, None, Some(3), None).await?;
+    let rerank = client
+        .rerank(
+            query,
+            documents.iter().map(|s| s.to_string()).collect(),
+            None,
+            Some(3),
+            None,
+        )
+        .await?;
 
-    println!("{}", rerank.model);              // "rerank-2"
-    println!("{}", rerank.usage.total_tokens); // total tokens used
+    println!("Model:        {}", rerank.model);
+    println!("Total tokens: {}", rerank.usage.total_tokens);
+    println!();
 
     for result in &rerank.results {
-        println!("index={} relevance_score={}", result.index, result.relevance_score);
+        println!(
+            "[{:.4}] {}",
+            result.relevance_score, documents[result.index]
+        );
     }
 
     Ok(())
@@ -235,16 +247,6 @@ Embeds a set of documents, finds the 4 nearest neighbors by Euclidean distance, 
 cargo run --example search
 ```
 
-```
-query="What do George and Ringo do?"
-document="Ringo is a doctor." relevance_score=0.67578125
-document="George is a teacher." relevance_score=0.5859375
-
-query="Who works in the medical field?"
-document="Bill is a nurse." relevance_score=0.55078125
-document="Ringo is a doctor." relevance_score=0.50390625
-```
-
 ### Single Embedding
 
 Demonstrates generating an embedding for a single text and querying with a specific model (`voyage-3`).
@@ -252,17 +254,6 @@ Demonstrates generating an embedding for a single text and querying with a speci
 ```bash
 cargo run --example embed-single
 ```
-
-```
-Model: voyage-3.5
-Tokens used: 13
-Dimensions: 1024
-First 5 values: [0.054095149, 0.034528818, -0.008440378, 0.026088441, 0.038365357]
-
-Query embedding model: voyage-3
-Query embedding dimensions: 1024
-```
-
 ### Rerank Documents
 
 Shows full ranking, top-k filtering, and model comparison (`rerank-2` vs `rerank-2-lite`).
@@ -270,46 +261,12 @@ Shows full ranking, top-k filtering, and model comparison (`rerank-2` vs `rerank
 ```bash
 cargo run --example rerank-documents
 ```
-
-```
-=== Full ranking ===
-Query: "Who should I call if my pipes are leaking?"
-Model: rerank-2
-Tokens used: 98
-
-  [1] score=0.5508  "Paul is a licensed plumber with 15 years of experience."
-  [3] score=0.4863  "Ringo is a doctor specializing in cardiology."
-  ...
-
-=== Top 2 only ===
-  [1] score=0.5508  "Paul is a licensed plumber with 15 years of experience."
-  ...
-
-=== Using rerank-2-lite ===
-Model: rerank-2-lite
-  [1] score=0.5352  "Paul is a licensed plumber with 15 years of experience."
-  ...
-```
-
 ### Topic Classification
 
 Zero-shot topic classification using cosine similarity between text embeddings and topic label embeddings.
 
 ```bash
 cargo run --example classify-topics
-```
-
-```
-Tokens used: 97
-
-[0.6481] Rust's borrow checker prevents data races at compile time. => Technology and programming
-[0.6546] The sourdough bread needs to proof for at least 12 hours. => Cooking and food
-[0.7451] She finished the marathon in under three hours.           => Sports and athletics
-[0.7621] The new album features a blend of jazz and electronic music. => Music and entertainment
-[0.7175] The researchers published their findings on CRISPR gene editing. => Science and research
-[0.7398] Python is great for machine learning prototyping.         => Technology and programming
-[0.6778] Add a pinch of saffron to the risotto for extra flavor.   => Cooking and food
-[0.6927] The goalkeeper made an incredible save in the final minute. => Sports and athletics
 ```
 
 ### Running All Examples
