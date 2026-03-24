@@ -1,5 +1,4 @@
-use mongodb_voyageai::{Client, Config};
-use mongodb_voyageai::model;
+use mongodb_voyageai::{Client, Config, model};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {

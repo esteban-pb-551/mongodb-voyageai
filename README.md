@@ -14,7 +14,7 @@ Add `mongodb-voyageai` to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-mongodb-voyageai = "0.0.2"
+mongodb-voyageai = "0.0.3"
 tokio = { version = "1", features = ["full"] }
 ```
 
@@ -390,7 +390,7 @@ Full API docs are generated with rustdoc. Every public item is documented with e
 cargo doc --open
 ```
 
-Or browse online at [docs.rs/voyageai](https://docs.rs/voyageai).
+Or browse online at [docs.rs/mongodb-voyageai](https://docs.rs/mongodb-voyageai/latest/mongodb_voyageai/).
 
 ## License
 

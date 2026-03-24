@@ -30,5 +30,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Criterion benchmarks for parsing, serialization, client construction, and HTTP round-trips
 - Comprehensive test suite (unit, integration, and doc-tests)
 
-[Unreleased]: https://github.com/YOUR_USERNAME/voyageai-rust/compare/v0.0.1...HEAD
-[0.0.1]: https://github.com/YOUR_USERNAME/voyageai-rust/releases/tag/v0.0.1
+[0.0.1]: https://github.com/esteban-pb-551/mongodb-voyageai/releases/tag/v0.0.1
+
+## [0.0.2] - 2026-03-24
+
+### Fixed
+- Resolved incorrect package name in README.md file
+
+[0.0.2]: https://github.com/esteban-pb-551/mongodb-voyageai/releases/tag/v0.0.2
