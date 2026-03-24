@@ -1,8 +1,8 @@
-# voyageai
+# mongodb-voyageai
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE.txt)
 [![Crates.io](https://img.shields.io/crates/v/mongodb-voyageai)](https://crates.io/crates/mongodb-voyageai)
-[![docs.rs](https://img.shields.io/docsrs/voyageai)](https://docs.rs/voyageai)
+[![docs.rs](https://img.shields.io/docsrs/mongodb-voyageai)](https://docs.rs/mongodb-voyageai)
 
 An async Rust client for the [VoyageAI](https://www.voyageai.com) API — generate embeddings and rerank documents with ease.
 
@@ -10,11 +10,11 @@ An async Rust client for the [VoyageAI](https://www.voyageai.com) API — genera
 
 ## Installation
 
-Add `voyageai` to your `Cargo.toml`:
+Add `mongodb-voyageai` to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-voyageai = "0.0.1"
+mongodb-voyageai = "0.0.1"
 tokio = { version = "1", features = ["full"] }
 ```
 
