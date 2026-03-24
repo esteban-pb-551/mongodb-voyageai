@@ -42,16 +42,16 @@ crates.io enforces several metadata fields. The current `Cargo.toml` is missing 
 
 ```toml
 [package]
-name = "voyageai"
+name = "mongodb-voyageai"
 version = "1.0.1"
 edition = "2024"
-description = "A client for generating embeddings and reranking with https://voyageai.com"
+description = "A client for generating embeddings and reranking with Voyage AI"
 license = "MIT"
-repository = "https://github.com/<owner>/voyageai-rust"
-homepage = "https://github.com/<owner>/voyageai-rust"
-documentation = "https://docs.rs/voyageai"
+repository = "https://github.com/<owner>/mongodb-voyageai"
+homepage = "https://github.com/<owner>/mongodb-voyageai"
+documentation = "https://docs.rs/mongodb-voyageai"
 readme = "README.md"
-keywords = ["voyageai", "embeddings", "rerank", "ai", "nlp"]
+keywords = ["voyageai", "embeddings", "rerank", "ai", "nlp", "mongodb"]
 categories = ["api-bindings", "science"]
 ```
 

@@ -4,6 +4,12 @@ version = "0.0.1"
 edition = "2024"
 description = "A client for generating embeddings and reranking with Voyage AI"
 license = "MIT"
+repository = "https://github.com/esteban-pb-551/mongodb-voyageai"
+homepage = "https://github.com/esteban-pb-551/mongodb-voyageai"
+documentation = "https://docs.rs/mongodb-voyageai"
+readme = "README.md"
+keywords = ["voyageai", "embeddings", "rerank", "ai", "nlp", "mongodb"]
+categories = ["api-bindings", "science"]
 
 [dependencies]
 reqwest = { version = "0.13.2", default-features = false, features = ["json", "rustls"] }
