@@ -51,7 +51,7 @@ repository = "https://github.com/<owner>/mongodb-voyageai"
 homepage = "https://github.com/<owner>/mongodb-voyageai"
 documentation = "https://docs.rs/mongodb-voyageai"
 readme = "README.md"
-keywords = ["voyageai", "embeddings", "rerank", "ai", "nlp", "mongodb"]
+keywords = ["voyageai", "embeddings", "rerank", "ai", "nlp"]
 categories = ["api-bindings", "science"]
 ```
 

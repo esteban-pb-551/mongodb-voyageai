@@ -8,7 +8,7 @@ repository = "https://github.com/esteban-pb-551/mongodb-voyageai"
 homepage = "https://github.com/esteban-pb-551/mongodb-voyageai"
 documentation = "https://docs.rs/mongodb-voyageai"
 readme = "README.md"
-keywords = ["voyageai", "embeddings", "rerank", "ai", "nlp", "mongodb"]
+keywords = ["voyageai", "embeddings", "rerank", "ai", "nlp"]
 categories = ["api-bindings", "science"]
 
 [dependencies]
