@@ -1,0 +1,23 @@
+[package]
+name = "mongodb-voyageai"
+version = "0.0.1"
+edition = "2024"
+description = "A client for generating embeddings and reranking with Voyage AI"
+license = "MIT"
+
+[dependencies]
+reqwest = { version = "0.13.2", default-features = false, features = ["json", "rustls"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+tokio = { version = "1", features = ["full"] }
+tracing = "0.1"
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["async_tokio"] }
+mockito = "1"
+tokio = { version = "1", features = ["full", "test-util"] }
+
+[[bench]]
+name = "benchmarks"
+harness = false
