@@ -59,4 +59,4 @@ https://www.contributor-covenant.org/version/2/1/code_of_conduct.html
 ---
 
 **License:** This project is licensed under the [MIT License](./LICENSE).  
-**Package:** `mongodb-voyageai` v0.0.1
+**Package:** `mongodb-voyageai` v0.0.2

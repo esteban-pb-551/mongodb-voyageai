@@ -14,7 +14,7 @@ Add `mongodb-voyageai` to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-mongodb-voyageai = "0.0.1"
+mongodb-voyageai = "0.0.2"
 tokio = { version = "1", features = ["full"] }
 ```
 

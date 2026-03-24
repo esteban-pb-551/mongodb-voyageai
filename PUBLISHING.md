@@ -200,16 +200,150 @@ This:
 
 ---
 
-## Publishing updates
+## Publishing a New Version
 
-To publish a new version:
+This section covers the full end-to-end workflow for releasing an update to an already-published crate.
 
-1. Bump the `version` in `Cargo.toml` (e.g. `1.9.0` -> `1.9.1`).
-2. Run the pre-publish checklist.
-3. Commit and tag.
-4. `cargo publish`.
+### Versioning strategy (SemVer)
 
-You **cannot** re-publish the same version. If you need to fix a mistake, bump the patch version.
+Follow [Semantic Versioning](https://semver.org/) when choosing the next version number:
+
+| Change type | Version bump | Example |
+|-------------|-------------|---------|
+| Bug fix, docs, internal refactor (no API change) | **Patch** | `1.2.3` → `1.2.4` |
+| New public API, backwards-compatible feature | **Minor** | `1.2.3` → `1.3.0` |
+| Breaking change to public API | **Major** | `1.2.3` → `2.0.0` |
+
+> You **cannot** re-publish the same version. If you made a mistake, bump the patch version and republish.
+
+---
+
+### Step 1 — Update the version in `Cargo.toml`
+
+Open `Cargo.toml` and bump `version`:
+
+```toml
+[package]
+name = "voyageai"
+version = "1.9.1"   # was 1.9.0
+```
+
+If the crate has a `Cargo.lock` checked in (binary/application crates), update it too:
+
+```bash
+cargo update --workspace
+```
+
+---
+
+### Step 2 — Update the CHANGELOG
+
+Document what changed. A minimal entry looks like this:
+
+```markdown
+## [1.9.1] - 2025-07-10
+
+### Fixed
+- Resolved incorrect timeout on retry logic (#42)
+
+### Added
+- New `rerank_batch` helper for bulk reranking
+```
+
+Keeping a changelog makes it easier for users to understand what changed and decide whether to upgrade.
+
+---
+
+### Step 3 — Run the pre-publish checklist
+
+```bash
+# Format
+cargo fmt --check
+
+# Lint — treat warnings as errors to keep the codebase clean
+cargo clippy --all-targets -- -D warnings
+
+# Tests (unit + integration + doc-tests)
+cargo test --all-features
+
+# Docs — no broken links or missing public items
+RUSTDOCFLAGS="-D warnings" cargo doc --no-deps
+
+# Dry-run: catches metadata errors before uploading
+cargo publish --dry-run
+```
+
+Fix every error or warning before continuing. The dry-run simulates the full publish process without uploading.
+
+---
+
+### Step 4 — Commit and tag
+
+All changes must be committed. The tag acts as a permanent reference to the exact source for this release:
+
+```bash
+git add Cargo.toml Cargo.lock CHANGELOG.md   # add any other changed files
+git commit -m "Release v1.9.1"
+
+git tag v1.9.1
+git push origin main --tags
+```
+
+> **Tip:** Push the tag before publishing so the crates.io page and the git history stay in sync.
+
+---
+
+### Step 5 — Publish
+
+```bash
+cargo publish
+```
+
+Cargo will package the crate, upload it, and print a confirmation URL. The new version is live immediately but docs.rs may take a few minutes to build.
+
+---
+
+### Step 6 — Verify the release
+
+1. Check the crates.io page:
+   ```
+   https://crates.io/crates/voyageai
+   ```
+2. Confirm the new version appears at the top of the version list.
+3. Wait ~5 minutes, then verify docs.rs built successfully:
+   ```
+   https://docs.rs/voyageai/<new-version>
+   ```
+4. Optionally, create a GitHub Release pointing to the tag and paste in the CHANGELOG entry.
+
+---
+
+### Updating dependencies in downstream projects
+
+After publishing, users can upgrade with:
+
+```bash
+cargo update -p voyageai
+```
+
+Or by editing their `Cargo.toml` to pin the new version:
+
+```toml
+[dependencies]
+voyageai = "1.9.1"
+```
+
+---
+
+### Common issues when publishing updates
+
+| Error | Cause | Fix |
+|-------|-------|-----|
+| `cannot publish a new version of a crate that already exists` with same version | Version not bumped | Increment `version` in `Cargo.toml` |
+| `working directory contains uncommitted changes` | Dirty git state | `git add -A && git commit` |
+| `failed to verify package tarball` | Code doesn't compile from the packaged archive | Run `cargo package` locally and fix build errors |
+| `package size exceeds 10MB` | Large test fixtures or generated files included | Add paths to `.gitignore` or use `exclude` in `Cargo.toml` |
+| Docs.rs build fails | Feature-gated code or platform-specific dependencies | Check the build log at `https://docs.rs/crate/voyageai/<version>/builds` |
 
 ---
 
