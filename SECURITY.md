@@ -116,7 +116,7 @@ cargo audit
 1. **Always set a timeout** to prevent resource exhaustion:
    ```rust
    use std::time::Duration;
-   use voyageai::Config;
+   use mongodb_voyageai::Config;
 
    let config = Config {
        timeout: Some(Duration::from_secs(30)),

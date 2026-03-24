@@ -1,4 +1,5 @@
-use voyageai::{Client, Config};
+use mongodb_voyageai::{Client, Config};
+use mongodb_voyageai::model;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -53,7 +54,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .rerank(
             query,
             documents.clone(),
-            Some(voyageai::model::RERANK_LITE),
+            Some(model::RERANK_LITE),
             Some(3),
             None,
         )

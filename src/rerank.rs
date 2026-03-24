@@ -22,7 +22,7 @@ struct RerankResponse {
 /// Parse a raw JSON response:
 ///
 /// ```rust
-/// use voyageai::Rerank;
+/// use mongodb_voyageai::Rerank;
 ///
 /// let json = r#"{
 ///     "object": "list",
@@ -62,7 +62,7 @@ impl Rerank {
     /// # Examples
     ///
     /// ```rust
-    /// use voyageai::Rerank;
+    /// use mongodb_voyageai::Rerank;
     ///
     /// let json = r#"{
     ///     "object": "list",

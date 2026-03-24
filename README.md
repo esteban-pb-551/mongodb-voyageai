@@ -23,10 +23,10 @@ Requires **Rust edition 2024** (rustc 1.85+).
 ## Quick Start
 
 ```rust
-use voyageai::{Client, Config};
+use mongodb_voyageai::{Client, Config};
 
 #[tokio::main]
-async fn main() -> Result<(), voyageai::Error> {
+async fn main() -> Result<(), mongodb_voyageai::Error> {
     // Reads VOYAGEAI_API_KEY from the environment by default
     let client = Client::new(&Config::new())?;
 
@@ -50,10 +50,10 @@ async fn main() -> Result<(), voyageai::Error> {
 #### Single Embedding
 
 ```rust
-use voyageai::{Client, Config};
+use mongodb_voyageai::{Client, Config};
 
 #[tokio::main]
-async fn main() -> Result<(), voyageai::Error> {
+async fn main() -> Result<(), mongodb_voyageai::Error> {
     let client = Client::with_api_key("pa-...")?;
 
     let embed = client
@@ -71,10 +71,10 @@ async fn main() -> Result<(), voyageai::Error> {
 #### Multiple Embeddings
 
 ```rust
-use voyageai::{Client, Config};
+use mongodb_voyageai::{Client, Config};
 
 #[tokio::main]
-async fn main() -> Result<(), voyageai::Error> {
+async fn main() -> Result<(), mongodb_voyageai::Error> {
     let client = Client::with_api_key("pa-...")?;
 
     let input = vec![
@@ -108,10 +108,10 @@ async fn main() -> Result<(), voyageai::Error> {
 ### Reranking
 
 ```rust
-use voyageai::{Client, Config};
+use mongodb_voyageai::{Client, Config};
 
 #[tokio::main]
-async fn main() -> Result<(), voyageai::Error> {
+async fn main() -> Result<(), mongodb_voyageai::Error> {
     let client = Client::with_api_key("pa-...")?;
 
     let query = "Who is the best person to call for a toilet?";
@@ -152,7 +152,7 @@ The `Config` struct controls client behavior. All fields read from environment v
 
 ```rust
 use std::time::Duration;
-use voyageai::{Client, Config};
+use mongodb_voyageai::{Client, Config};
 
 let config = Config {
     api_key: Some("pa-...".into()),                   // or VOYAGEAI_API_KEY
@@ -173,7 +173,7 @@ let client = Client::new(&config).unwrap();
 
 ## Models
 
-Pre-defined model constants are available in the `voyageai::model` module:
+Pre-defined model constants are available in the `mongodb_voyageai::model` module:
 
 ### Embedding Models
 
@@ -198,10 +198,10 @@ Pre-defined model constants are available in the `voyageai::model` module:
 
 ## Error Handling
 
-All fallible operations return `Result<T, voyageai::Error>`:
+All fallible operations return `Result<T, mongodb_voyageai::Error>`:
 
 ```rust
-use voyageai::Error;
+use mongodb_voyageai::Error;
 
 match client.embed(vec!["hello".into()], None, None, None, None).await {
     Ok(embed) => println!("Got {} embeddings", embed.embeddings.len()),

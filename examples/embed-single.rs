@@ -1,4 +1,5 @@
-use voyageai::{Client, Config};
+use mongodb_voyageai::{Client, Config};
+use mongodb_voyageai::model;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -21,7 +22,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let embed_query = client
         .embed(
             vec!["What is Rust?".into()],
-            Some(voyageai::model::VOYAGE_3),
+            Some(model::VOYAGE_3),
             Some("query"),
             None,
             None,

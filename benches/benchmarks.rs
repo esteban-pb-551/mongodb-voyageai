@@ -1,5 +1,5 @@
 use criterion::{BenchmarkId, Criterion, black_box, criterion_group, criterion_main};
-use voyageai::{Client, Config, Embed, Rerank, Reranking, Usage, client, model};
+use mongodb_voyageai::{Client, Config, Embed, Rerank, Reranking, Usage, client, model};
 
 // ---------------------------------------------------------------------------
 // JSON fixtures

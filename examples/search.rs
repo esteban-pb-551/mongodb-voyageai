@@ -1,4 +1,4 @@
-use voyageai::{Client, Config};
+use mongodb_voyageai::{Client, Config};
 
 struct Entry {
     document: String,

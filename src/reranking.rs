@@ -13,7 +13,7 @@ use std::fmt;
 /// Deserialise from JSON:
 ///
 /// ```rust
-/// use voyageai::Reranking;
+/// use mongodb_voyageai::Reranking;
 ///
 /// let json = r#"{"index": 2, "document": "Rust is fast.", "relevance_score": 0.95}"#;
 /// let r: Reranking = serde_json::from_str(json).unwrap();
@@ -26,7 +26,7 @@ use std::fmt;
 /// The `document` field is optional — the API may omit it:
 ///
 /// ```rust
-/// use voyageai::Reranking;
+/// use mongodb_voyageai::Reranking;
 ///
 /// let json = r#"{"index": 0, "relevance_score": 0.5}"#;
 /// let r: Reranking = serde_json::from_str(json).unwrap();

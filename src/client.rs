@@ -13,7 +13,7 @@ use crate::rerank::Rerank;
 /// # Examples
 ///
 /// ```rust
-/// use voyageai::Error;
+/// use mongodb_voyageai::Error;
 ///
 /// let err = Error::RequestError {
 ///     status: 401,
@@ -47,7 +47,7 @@ pub enum Error {
 /// # Examples
 ///
 /// ```rust
-/// use voyageai::client::EmbedInput;
+/// use mongodb_voyageai::client::EmbedInput;
 ///
 /// let input = EmbedInput {
 ///     input: vec!["hello".into()],
@@ -85,7 +85,7 @@ pub struct EmbedInput {
 /// # Examples
 ///
 /// ```rust
-/// use voyageai::client::RerankInput;
+/// use mongodb_voyageai::client::RerankInput;
 ///
 /// let input = RerankInput {
 ///     query: "search query".into(),
@@ -125,7 +125,7 @@ pub struct RerankInput {
 /// Create from a [`Config`]:
 ///
 /// ```rust
-/// use voyageai::{Client, Config};
+/// use mongodb_voyageai::{Client, Config};
 ///
 /// let config = Config {
 ///     api_key: Some("pa-test-key".into()),
@@ -137,7 +137,7 @@ pub struct RerankInput {
 /// Shorthand with just an API key:
 ///
 /// ```rust
-/// use voyageai::Client;
+/// use mongodb_voyageai::Client;
 ///
 /// let client = Client::with_api_key("pa-test-key").unwrap();
 /// ```
@@ -145,7 +145,7 @@ pub struct RerankInput {
 /// Debug output masks the key:
 ///
 /// ```rust
-/// use voyageai::Client;
+/// use mongodb_voyageai::Client;
 ///
 /// let client = Client::with_api_key("pa-secret-key-123").unwrap();
 /// let debug = format!("{client:?}");
@@ -185,7 +185,7 @@ impl Client {
     /// # Examples
     ///
     /// ```rust
-    /// use voyageai::{Client, Config};
+    /// use mongodb_voyageai::{Client, Config};
     ///
     /// let config = Config {
     ///     api_key: Some("pa-key".into()),
@@ -197,7 +197,7 @@ impl Client {
     /// Missing key returns an error:
     ///
     /// ```rust
-    /// use voyageai::{Client, Config, Error};
+    /// use mongodb_voyageai::{Client, Config, Error};
     ///
     /// let config = Config {
     ///     api_key: None,
@@ -238,7 +238,7 @@ impl Client {
     /// # Examples
     ///
     /// ```rust
-    /// use voyageai::Client;
+    /// use mongodb_voyageai::Client;
     ///
     /// let client = Client::with_api_key("pa-my-key").unwrap();
     /// ```
@@ -268,9 +268,10 @@ impl Client {
     /// # Examples
     ///
     /// ```rust,no_run
-    /// # use voyageai::Client;
+    /// # use mongodb_voyageai::Client;
+    /// # use mongodb_voyageai::model;
     /// # #[tokio::main]
-    /// # async fn main() -> Result<(), voyageai::Error> {
+    /// # async fn main() -> Result<(), mongodb_voyageai::Error> {
     /// let client = Client::with_api_key("pa-...")?;
     ///
     /// // Single text, default model
@@ -283,7 +284,7 @@ impl Client {
     /// let embed = client
     ///     .embed(
     ///         vec!["doc one".into(), "doc two".into()],
-    ///         Some(voyageai::model::VOYAGE_3_LARGE),
+    ///         Some(model::VOYAGE_3_LARGE),
     ///         Some("document"),
     ///         Some(true),
     ///         None,
@@ -343,9 +344,9 @@ impl Client {
     /// # Examples
     ///
     /// ```rust,no_run
-    /// # use voyageai::Client;
+    /// # use mongodb_voyageai::Client;
     /// # #[tokio::main]
-    /// # async fn main() -> Result<(), voyageai::Error> {
+    /// # async fn main() -> Result<(), mongodb_voyageai::Error> {
     /// let client = Client::with_api_key("pa-...")?;
     ///
     /// let rerank = client

@@ -6,10 +6,10 @@
 //! ## Quick Start
 //!
 //! ```rust,no_run
-//! use voyageai::{Client, Config};
+//! use mongodb_voyageai::{Client, Config};
 //!
 //! # #[tokio::main]
-//! # async fn main() -> Result<(), voyageai::Error> {
+//! # async fn main() -> Result<(), mongodb_voyageai::Error> {
 //! // Reads VOYAGEAI_API_KEY from the environment
 //! let client = Client::new(&Config::new())?;
 //!
@@ -26,9 +26,9 @@
 //! ## Embeddings
 //!
 //! ```rust,no_run
-//! # use voyageai::{Client, Config};
+//! # use mongodb_voyageai::{Client, Config};
 //! # #[tokio::main]
-//! # async fn main() -> Result<(), voyageai::Error> {
+//! # async fn main() -> Result<(), mongodb_voyageai::Error> {
 //! let client = Client::with_api_key("pa-...")?;
 //!
 //! // Single embedding
@@ -41,7 +41,7 @@
 //! let embed = client
 //!     .embed(
 //!         vec!["doc one".into(), "doc two".into()],
-//!         Some(voyageai::model::VOYAGE_3),
+//!         Some(mongodb_voyageai::model::VOYAGE_3),
 //!         Some("document"),
 //!         None,
 //!         None,
@@ -55,9 +55,9 @@
 //! ## Reranking
 //!
 //! ```rust,no_run
-//! # use voyageai::{Client, Config};
+//! # use mongodb_voyageai::{Client, Config};
 //! # #[tokio::main]
-//! # async fn main() -> Result<(), voyageai::Error> {
+//! # async fn main() -> Result<(), mongodb_voyageai::Error> {
 //! let client = Client::with_api_key("pa-...")?;
 //!
 //! let rerank = client
@@ -79,7 +79,7 @@
 //!
 //! ```rust
 //! use std::time::Duration;
-//! use voyageai::Config;
+//! use mongodb_voyageai::Config;
 //!
 //! let config = Config {
 //!     api_key: Some("pa-...".into()),
@@ -92,7 +92,7 @@
 //! ## Error Handling
 //!
 //! ```rust,no_run
-//! # use voyageai::{Client, Config, Error};
+//! # use mongodb_voyageai::{Client, Config, Error};
 //! # #[tokio::main]
 //! # async fn main() {
 //! # let client = Client::with_api_key("pa-...").unwrap();

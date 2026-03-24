@@ -1,4 +1,4 @@
-use voyageai::{Client, Config};
+use mongodb_voyageai::{Client, Config};
 
 fn cosine_similarity(a: &[f64], b: &[f64]) -> f64 {
     let dot: f64 = a.iter().zip(b.iter()).map(|(x, y)| x * y).sum();

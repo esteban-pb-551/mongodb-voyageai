@@ -26,7 +26,7 @@ struct EmbedResponse {
 /// Parse a raw JSON response:
 ///
 /// ```rust
-/// use voyageai::Embed;
+/// use mongodb_voyageai::Embed;
 ///
 /// let json = r#"{
 ///     "object": "list",
@@ -47,7 +47,7 @@ struct EmbedResponse {
 /// Access individual embeddings:
 ///
 /// ```rust
-/// # use voyageai::Embed;
+/// # use mongodb_voyageai::Embed;
 /// # let json = r#"{
 /// #     "object": "list",
 /// #     "data": [
@@ -85,7 +85,7 @@ impl Embed {
     /// # Examples
     ///
     /// ```rust
-    /// use voyageai::Embed;
+    /// use mongodb_voyageai::Embed;
     ///
     /// let json = r#"{
     ///     "object": "list",
@@ -111,7 +111,7 @@ impl Embed {
     /// # Examples
     ///
     /// ```rust
-    /// # use voyageai::Embed;
+    /// # use mongodb_voyageai::Embed;
     /// # let json = r#"{
     /// #     "object": "list",
     /// #     "data": [{"object": "embedding", "embedding": [0.5, 0.6], "index": 0}],

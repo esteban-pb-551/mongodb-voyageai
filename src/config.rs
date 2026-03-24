@@ -24,7 +24,7 @@ const DEFAULT_VERSION: &str = "v1";
 /// Using environment defaults:
 ///
 /// ```rust
-/// use voyageai::Config;
+/// use mongodb_voyageai::Config;
 ///
 /// let config = Config::new();
 /// assert_eq!(config.host, "https://api.voyageai.com");
@@ -35,7 +35,7 @@ const DEFAULT_VERSION: &str = "v1";
 ///
 /// ```rust
 /// use std::time::Duration;
-/// use voyageai::Config;
+/// use mongodb_voyageai::Config;
 ///
 /// let config = Config {
 ///     api_key: Some("pa-...".into()),
@@ -75,7 +75,7 @@ impl Config {
     /// # Examples
     ///
     /// ```rust
-    /// use voyageai::Config;
+    /// use mongodb_voyageai::Config;
     ///
     /// let config = Config::new();
     /// assert_eq!(config.version, "v1");

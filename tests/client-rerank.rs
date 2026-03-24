@@ -1,4 +1,4 @@
-use voyageai::{Client, Config, Error, model};
+use mongodb_voyageai::{Client, Config, Error, model};
 
 fn mock_config(server_url: String) -> Config {
     Config {

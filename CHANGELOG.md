@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Configurable model, input type, truncation, and output dimension
 - Document reranking via the `/rerank` endpoint
   - Configurable model, top-k, and truncation
-- Pre-defined model constants in `voyageai::model`
+- Pre-defined model constants in `mongodb_voyageai::model`
   - Embedding: `VOYAGE` (voyage-3.5), `VOYAGE_LITE`, `VOYAGE_3`, `VOYAGE_3_LARGE`, `VOYAGE_3_LITE`, `VOYAGE_FINANCE`, `VOYAGE_MULTILINGUAL`, `VOYAGE_LAW`, `VOYAGE_CODE`
   - Reranking: `RERANK` (rerank-2), `RERANK_LITE`
 - Configuration from environment variables (`VOYAGEAI_API_KEY`, `VOYAGEAI_HOST`, `VOYAGEAI_VERSION`)

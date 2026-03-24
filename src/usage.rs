@@ -13,7 +13,7 @@ use std::fmt;
 /// Deserialise from JSON:
 ///
 /// ```rust
-/// use voyageai::Usage;
+/// use mongodb_voyageai::Usage;
 ///
 /// let json = r#"{"total_tokens": 42}"#;
 /// let usage: Usage = serde_json::from_str(json).unwrap();
@@ -23,7 +23,7 @@ use std::fmt;
 /// Display:
 ///
 /// ```rust
-/// use voyageai::Usage;
+/// use mongodb_voyageai::Usage;
 ///
 /// let usage = Usage { total_tokens: 100 };
 /// assert_eq!(format!("{usage}"), "Usage { total_tokens: 100 }");

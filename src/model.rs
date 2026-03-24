@@ -6,7 +6,7 @@
 //! # Examples
 //!
 //! ```rust
-//! use voyageai::model;
+//! use mongodb_voyageai::model;
 //!
 //! // Default embedding model
 //! assert_eq!(model::VOYAGE, "voyage-3.5");
