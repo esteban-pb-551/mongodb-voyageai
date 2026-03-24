@@ -890,7 +890,7 @@ dependencies = [
 
 [[package]]
 name = "mongodb-voyageai"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
  "criterion",
  "mockito",
