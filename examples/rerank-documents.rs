@@ -48,12 +48,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     // Rerank with the lite model
-    println!("\n=== Using rerank-2-lite ===");
+    println!("\n=== Using rerank-2.5-lite ===");
     let lite = client
         .rerank(
             query,
             documents.clone(),
-            Some(model::RERANK_LITE),
+            Some(model::RERANK_2_5_LITE),
             Some(3),
             None,
         )

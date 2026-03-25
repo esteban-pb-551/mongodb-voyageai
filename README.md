@@ -14,7 +14,7 @@ Add `mongodb-voyageai` to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-mongodb-voyageai = "0.0.3"
+mongodb-voyageai = "0.0.4"
 tokio = { version = "1", features = ["full"] }
 ```
 
@@ -60,7 +60,7 @@ async fn main() -> Result<(), mongodb_voyageai::Error> {
         .embed(vec!["A quick brown fox jumps over the lazy dog.".into()], None, None, None, None)
         .await?;
 
-    println!("{}", embed.model);                  // "voyage-3.5"
+    println!("{}", embed.model);                  // "voyage-4"
     println!("{}", embed.usage.total_tokens);      // 11
     println!("{:?}", embed.embedding(0).unwrap()); // [0.0, ...]
 
@@ -86,7 +86,7 @@ async fn main() -> Result<(), mongodb_voyageai::Error> {
 
     let embed = client.embed(input, None, Some("document"), None, None).await?;
 
-    println!("{}", embed.model);                // "voyage-3.5"
+    println!("{}", embed.model);                // "voyage-4"
     println!("{}", embed.usage.total_tokens);    // total tokens used
     println!("{}", embed.embeddings.len());      // 4
     println!("{:?}", embed.embedding(0));        // Some([0.0, ...])
@@ -100,7 +100,7 @@ async fn main() -> Result<(), mongodb_voyageai::Error> {
 | Parameter          | Type            | Default              | Description                            |
 |--------------------|-----------------|----------------------|----------------------------------------|
 | `input`            | `Vec<String>`   | *required*           | Texts to embed                         |
-| `embed_model`      | `Option<&str>`  | `"voyage-3.5"`       | Model identifier                       |
+| `embed_model`      | `Option<&str>`  | `"voyage-4"`         | Model identifier                       |
 | `input_type`       | `Option<&str>`  | `None`               | `"query"` or `"document"`              |
 | `truncation`       | `Option<bool>`  | `None`               | Truncate inputs exceeding context       |
 | `output_dimension` | `Option<u32>`   | `None`               | Reduce embedding dimensionality         |
@@ -189,24 +189,42 @@ Pre-defined model constants are available in the `mongodb_voyageai::model` modul
 
 ### Embedding Models
 
-| Constant                         | Value                   |
-|----------------------------------|-------------------------|
-| `model::VOYAGE` (default)        | `voyage-3.5`            |
-| `model::VOYAGE_LITE`             | `voyage-3.5-lite`       |
-| `model::VOYAGE_3`                | `voyage-3`              |
-| `model::VOYAGE_3_LARGE`          | `voyage-3-large`        |
-| `model::VOYAGE_3_LITE`           | `voyage-3-lite`         |
-| `model::VOYAGE_FINANCE`          | `voyage-finance-2`      |
-| `model::VOYAGE_MULTILINGUAL`     | `voyage-multilingual-2` |
-| `model::VOYAGE_LAW`              | `voyage-law-2`          |
-| `model::VOYAGE_CODE`             | `voyage-code-2`         |
+| Constant                              | Value                     |
+|---------------------------------------|---------------------------|
+| `model::VOYAGE_4` (default)           | `voyage-4`                |
+| `model::VOYAGE_4_LITE`                | `voyage-4-lite`           |
+| `model::VOYAGE_4_LARGE`               | `voyage-4-large`          |
+| `model::VOYAGE_3_5`                   | `voyage-3.5`              |
+| `model::VOYAGE_3_5_LITE`              | `voyage-3.5-lite`         |
+| `model::VOYAGE_3`                     | `voyage-3`                |
+| `model::VOYAGE_3_LITE`                | `voyage-3-lite`           |
+| `model::VOYAGE_3_LARGE`               | `voyage-3-large`          |
+| `model::VOYAGE_CONTEXT_3`             | `voyage-context-3`        |
+| `model::VOYAGE_CODE_3`                | `voyage-code-3`           |
+| `model::VOYAGE_CODE_2`                | `voyage-code-2`           |
+| `model::VOYAGE_FINANCE_2`             | `voyage-finance-2`        |
+| `model::VOYAGE_MULTILINGUAL_2`        | `voyage-multilingual-2`   |
+| `model::VOYAGE_LAW_2`                 | `voyage-law-2`            |
+| `model::VOYAGE_MULTIMODAL_3`          | `voyage-multimodal-3`     |
+| `model::VOYAGE_MULTIMODAL_3_5`        | `voyage-multimodal-3.5`   |
+| `model::VOYAGE_LARGE_2`               | `voyage-large-2`          |
+| `model::VOYAGE_LARGE_2_INSTRUCT`      | `voyage-large-2-instruct` |
+| `model::VOYAGE_LITE_02_INSTRUCT`      | `voyage-lite-02-instruct` |
+| `model::VOYAGE_LITE_01`               | `voyage-lite-01`          |
+| `model::VOYAGE_LITE_01_INSTRUCT`      | `voyage-lite-01-instruct` |
+| `model::VOYAGE_2`                     | `voyage-2`                |
+| `model::VOYAGE_01`                    | `voyage-01`               |
 
 ### Reranking Models
 
 | Constant                         | Value                   |
 |----------------------------------|-------------------------|
-| `model::RERANK` (default)        | `rerank-2`              |
-| `model::RERANK_LITE`             | `rerank-2-lite`         |
+| `model::RERANK_2_5` (default)    | `rerank-2.5`            |
+| `model::RERANK_2_5_LITE`         | `rerank-2.5-lite`       |
+| `model::RERANK_2`                | `rerank-2`              |
+| `model::RERANK_2_LITE`           | `rerank-2-lite`         |
+| `model::RERANK_1`                | `rerank-1`              |
+| `model::RERANK_1_LITE`           | `rerank-lite-1`         |
 
 ## Error Handling
 

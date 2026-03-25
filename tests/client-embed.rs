@@ -22,7 +22,7 @@ async fn embed_success() {
             r#"{
             "object": "list",
             "data": [{"object": "embedding", "embedding": [0.0, 1.0, 2.0, 3.0]}],
-            "model": "voyage-3.5",
+            "model": "voyage-4",
             "usage": {"total_tokens": 4}
         }"#,
         )
@@ -35,7 +35,7 @@ async fn embed_success() {
         .await
         .unwrap();
 
-    assert_eq!(embed.model, "voyage-3.5");
+    assert_eq!(embed.model, "voyage-4");
     assert_eq!(embed.usage.total_tokens, 4);
     assert_eq!(embed.embeddings, vec![vec![0.0, 1.0, 2.0, 3.0]]);
     mock.assert_async().await;
@@ -98,7 +98,7 @@ async fn embed_multiple_inputs() {
                 {"object": "embedding", "embedding": [0.2], "index": 1},
                 {"object": "embedding", "embedding": [0.3], "index": 2}
             ],
-            "model": "voyage-3.5",
+            "model": "voyage-4",
             "usage": {"total_tokens": 15}
         }"#,
         )
@@ -131,7 +131,7 @@ async fn embed_custom_model() {
     let mock = server
         .mock("POST", "/v1/embeddings")
         .match_body(mockito::Matcher::PartialJson(serde_json::json!({
-            "model": "voyage-code-2"
+            "model": "voyage-code-3"
         })))
         .with_status(200)
         .with_header("content-type", "application/json")
@@ -139,7 +139,7 @@ async fn embed_custom_model() {
             r#"{
             "object": "list",
             "data": [{"object": "embedding", "embedding": [1.0]}],
-            "model": "voyage-code-2",
+            "model": "voyage-code-3",
             "usage": {"total_tokens": 1}
         }"#,
         )
@@ -150,7 +150,7 @@ async fn embed_custom_model() {
     let embed = client
         .embed(
             vec!["fn main() {}".into()],
-            Some(model::VOYAGE_CODE),
+            Some(model::VOYAGE_CODE_3),
             None,
             None,
             None,
@@ -158,7 +158,7 @@ async fn embed_custom_model() {
         .await
         .unwrap();
 
-    assert_eq!(embed.model, "voyage-code-2");
+    assert_eq!(embed.model, "voyage-code-3");
     mock.assert_async().await;
 }
 
@@ -248,7 +248,7 @@ async fn embed_uses_custom_version_in_url() {
             r#"{
             "object": "list",
             "data": [{"object": "embedding", "embedding": [1.0]}],
-            "model": "voyage-3.5",
+            "model": "voyage-4",
             "usage": {"total_tokens": 1}
         }"#,
         )

@@ -75,7 +75,7 @@ async fn rerank_with_all_params() {
         .rerank(
             "query",
             vec!["doc a".into(), "doc b".into(), "doc c".into()],
-            Some(model::RERANK_LITE),
+            Some(model::RERANK_2_LITE),
             Some(2),
             Some(true),
         )

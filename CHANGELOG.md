@@ -38,3 +38,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Resolved incorrect package name in README.md file
 
 [0.0.2]: https://github.com/esteban-pb-551/mongodb-voyageai/releases/tag/v0.0.2
+
+## [0.0.3] - 2026-03-24
+
+### Fixed
+- Refactor client setup in examples files and example outputs in README.md
+
+[0.0.3]: https://github.com/esteban-pb-551/mongodb-voyageai/releases/tag/v0.0.3
+
+## [0.0.4] - 2026-03-25
+
+### Changed
+- Updated default embedding model from `voyage-3.5` to `voyage-4`
+- Updated default rerankking model from `rerank-2` to `rerank-2.5`
+
+[0.0.4]: https://github.com/esteban-pb-551/mongodb-voyageai/releases/tag/v0.0.4

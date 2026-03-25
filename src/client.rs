@@ -51,14 +51,14 @@ pub enum Error {
 ///
 /// let input = EmbedInput {
 ///     input: vec!["hello".into()],
-///     model: "voyage-3.5".into(),
+///     model: "voyage-4".into(),
 ///     input_type: Some("query".into()),
 ///     truncation: None,
 ///     output_dimension: None,
 /// };
 ///
 /// let json = serde_json::to_value(&input).unwrap();
-/// assert_eq!(json["model"], "voyage-3.5");
+/// assert_eq!(json["model"], "voyage-4");
 /// assert_eq!(json["input_type"], "query");
 /// // None fields are omitted
 /// assert!(json.get("truncation").is_none());
@@ -503,13 +503,13 @@ mod tests {
     fn embed_input_serialization_minimal() {
         let input = EmbedInput {
             input: vec!["hello".into()],
-            model: "voyage-3.5".into(),
+            model: "voyage-4".into(),
             input_type: None,
             truncation: None,
             output_dimension: None,
         };
         let json = serde_json::to_value(&input).unwrap();
-        assert_eq!(json["model"], "voyage-3.5");
+        assert_eq!(json["model"], "voyage-4");
         assert!(json.get("input_type").is_none());
         assert!(json.get("truncation").is_none());
         assert!(json.get("output_dimension").is_none());

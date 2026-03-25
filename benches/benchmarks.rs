@@ -9,7 +9,7 @@ fn embed_json_single() -> String {
     r#"{
         "object": "list",
         "data": [{"object": "embedding", "embedding": [0.1, 0.2, 0.3, 0.4, 0.5], "index": 0}],
-        "model": "voyage-3.5",
+        "model": "voyage-4",
         "usage": {"total_tokens": 5}
     }"#
     .to_string()
@@ -29,7 +29,7 @@ fn embed_json_multi(n: usize) -> String {
         })
         .collect();
     format!(
-        r#"{{"object": "list", "data": [{}], "model": "voyage-3.5", "usage": {{"total_tokens": {}}}}}"#,
+        r#"{{"object": "list", "data": [{}], "model": "voyage-4", "usage": {{"total_tokens": {}}}}}"#,
         entries.join(", "),
         n * 10
     )
@@ -238,7 +238,7 @@ fn bench_client_embed_roundtrip(c: &mut Criterion) {
                     r#"{
                     "object": "list",
                     "data": [{"object": "embedding", "embedding": [0.1, 0.2, 0.3]}],
-                    "model": "voyage-3.5",
+                    "model": "voyage-4",
                     "usage": {"total_tokens": 3}
                 }"#,
                 )
