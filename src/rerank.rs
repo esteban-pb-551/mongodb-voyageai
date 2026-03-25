@@ -17,29 +17,10 @@ struct RerankResponse {
 ///
 /// Contains the model used, token usage, and the ranked results.
 ///
-/// # Examples
-///
-/// Parse a raw JSON response:
+/// # Example
 ///
 /// ```rust
-/// use mongodb_voyageai::Rerank;
-///
-/// let json = r#"{
-///     "object": "list",
-///     "data": [
-///         {"index": 1, "relevance_score": 0.9},
-///         {"index": 0, "relevance_score": 0.3}
-///     ],
-///     "model": "rerank-2",
-///     "usage": {"total_tokens": 20}
-/// }"#;
-///
-/// let rerank = Rerank::parse(json).unwrap();
-/// assert_eq!(rerank.model, "rerank-2");
-/// assert_eq!(rerank.usage.total_tokens, 20);
-/// assert_eq!(rerank.results.len(), 2);
-/// assert_eq!(rerank.results[0].index, 1);
-/// assert!(rerank.results[0].relevance_score > rerank.results[1].relevance_score);
+#[doc = include_str!("../examples/rerank-documents.rs")]
 /// ```
 #[derive(Debug, Clone)]
 pub struct Rerank {
