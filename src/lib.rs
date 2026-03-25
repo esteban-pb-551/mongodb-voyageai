@@ -14,7 +14,8 @@
 //! let client = Client::new(&Config::new())?;
 //!
 //! let embed = client
-//!     .embed(vec!["Hello, world!".into()], None, None, None, None)
+//!     .embed(vec!["Hello, world!".into()])
+//!     .send()
 //!     .await?;
 //!
 //! println!("model: {}", embed.model);
@@ -26,27 +27,27 @@
 //! ## Embeddings
 //!
 //! ```rust,no_run
-//! # use mongodb_voyageai::{Client, Config};
+//! # use mongodb_voyageai::{Client, Config, model};
 //! # #[tokio::main]
 //! # async fn main() -> Result<(), mongodb_voyageai::Error> {
-//! let client = Client::with_api_key("pa-...")?;
+//! let config = Config::new();
+//! let client = Client::new(&config)?;
 //!
 //! // Single embedding
 //! let embed = client
-//!     .embed(vec!["A quick brown fox.".into()], None, None, None, None)
+//!     .embed(vec!["A quick brown fox.".into()])
+//!     .send()
 //!     .await?;
 //! let vector = embed.embedding(0).unwrap();
 //!
 //! // Multiple embeddings with a specific model
 //! let embed = client
-//!     .embed(
-//!         vec!["doc one".into(), "doc two".into()],
-//!         Some(mongodb_voyageai::model::VOYAGE_3),
-//!         Some("document"),
-//!         None,
-//!         None,
-//!     )
+//!     .embed(vec!["doc one".into(), "doc two".into()])
+//!     .model(model::VOYAGE_3)
+//!     .input_type("document")
+//!     .send()
 //!     .await?;
+//!
 //! assert_eq!(embed.embeddings.len(), 2);
 //! # Ok(())
 //! # }
@@ -63,11 +64,9 @@
 //! let rerank = client
 //!     .rerank(
 //!         "Who fixes pipes?",
-//!         vec!["Paul is a plumber.".into(), "John is a musician.".into()],
-//!         None,
-//!         Some(1),
-//!         None,
+//!         vec!["Paul is a plumber.".into(), "John is a musician.".into()]
 //!     )
+//!     .send()
 //!     .await?;
 //!
 //! println!("best match: index={}", rerank.results[0].index);
@@ -96,7 +95,7 @@
 //! # #[tokio::main]
 //! # async fn main() {
 //! # let client = Client::with_api_key("pa-...").unwrap();
-//! match client.embed(vec!["hello".into()], None, None, None, None).await {
+//! match client.embed(vec!["hello".into()]).send().await {
 //!     Ok(embed) => println!("{} embeddings", embed.embeddings.len()),
 //!     Err(Error::MissingApiKey) => eprintln!("set VOYAGEAI_API_KEY"),
 //!     Err(Error::RequestError { status, body }) => eprintln!("HTTP {status}: {body}"),

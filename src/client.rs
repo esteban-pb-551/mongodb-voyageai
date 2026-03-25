@@ -250,68 +250,295 @@ impl Client {
         Self::new(&config)
     }
 
-    /// Generates embeddings for the given input texts.
+    /// Creates an [`EmbedBuilder`] for the given input texts.
+    ///
+    /// Use the builder's setter methods to configure the request, then call
+    /// [`send`](EmbedBuilder::send) to execute it.
     ///
     /// # Arguments
     ///
     /// * `input` — One or more texts to embed.
-    /// * `embed_model` — Model name (defaults to [`model::VOYAGE`]).
-    /// * `input_type` — `"query"` or `"document"` (optional).
-    /// * `truncation` — Truncate long inputs (optional).
-    /// * `output_dimension` — Reduce dimensionality (optional).
     ///
-    /// # Errors
+    /// # Examples
     ///
-    /// Returns [`Error::RequestError`] on non-2xx responses, [`Error::Http`]
-    /// on network failures, or [`Error::Json`] on parse failures.
+    /// ```rust,no_run
+    /// # use mongodb_voyageai::{Client, model};
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), mongodb_voyageai::Error> {
+    /// let client = Client::with_api_key("pa-...")?;
+    ///
+    /// // Default model, no options
+    /// let embed = client
+    ///     .embed(vec!["Hello world".into()])
+    ///     .send()
+    ///     .await?;
+    ///
+    /// // Batch of documents with explicit model
+    /// let embed = client
+    ///     .embed(vec!["first doc".into(), "second doc".into()])
+    ///     .model(model::VOYAGE_3_LARGE)
+    ///     .input_type("document")
+    ///     .send()
+    ///     .await?;
+    ///
+    /// assert_eq!(embed.embeddings.len(), 2);
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn embed(&self, input: Vec<String>) -> EmbedBuilder<'_> {
+        EmbedBuilder::new(self, input)
+    }
+
+    /// Creates a [`RerankBuilder`] for the given query and documents.
+    ///
+    /// Use the builder's setter methods to configure the request, then call
+    /// [`send`](RerankBuilder::send) to execute it.
+    ///
+    /// # Arguments
+    ///
+    /// * `query` — The search query.
+    /// * `documents` — The documents to rerank.
     ///
     /// # Examples
     ///
     /// ```rust,no_run
     /// # use mongodb_voyageai::Client;
-    /// # use mongodb_voyageai::model;
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), mongodb_voyageai::Error> {
     /// let client = Client::with_api_key("pa-...")?;
     ///
-    /// // Single text, default model
-    /// let embed = client
-    ///     .embed(vec!["Hello world".into()], None, None, None, None)
-    ///     .await?;
-    /// println!("dimensions: {}", embed.embedding(0).unwrap().len());
-    ///
-    /// // Multiple texts with a specific model and input type
-    /// let embed = client
-    ///     .embed(
-    ///         vec!["doc one".into(), "doc two".into()],
-    ///         Some(model::VOYAGE_3_LARGE),
-    ///         Some("document"),
-    ///         Some(true),
-    ///         None,
+    /// // Default model, all results
+    /// let rerank = client
+    ///     .rerank(
+    ///         "Who fixes pipes?",
+    ///         vec!["Paul is a plumber.".into(), "John is a musician.".into()],
     ///     )
+    ///     .send()
     ///     .await?;
-    /// assert_eq!(embed.embeddings.len(), 2);
+    ///
+    /// // Return only the top result
+    /// let rerank = client
+    ///     .rerank(
+    ///         "Who fixes pipes?",
+    ///         vec!["Paul is a plumber.".into(), "John is a musician.".into()],
+    ///     )
+    ///     .top_k(1)
+    ///     .send()
+    ///     .await?;
+    ///
+    /// println!(
+    ///     "best: index={} score={}",
+    ///     rerank.results[0].index,
+    ///     rerank.results[0].relevance_score,
+    /// );
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn embed(
-        &self,
-        input: Vec<String>,
-        embed_model: Option<&str>,
-        input_type: Option<&str>,
-        truncation: Option<bool>,
-        output_dimension: Option<u32>,
-    ) -> Result<Embed, Error> {
-        let payload = EmbedInput {
+    pub fn rerank<'a>(&'a self, query: &'a str, documents: Vec<String>) -> RerankBuilder<'a> {
+        RerankBuilder::new(self, query, documents)
+    }
+}
+
+// ─── EmbedBuilder ────────────────────────────────────────────────────────────
+
+/// A builder for constructing and sending embedding requests.
+///
+/// Created via [`Client::embed`]. Chain setter methods to configure optional
+/// parameters, then call [`send`](EmbedBuilder::send) to execute the request.
+///
+/// # Examples
+///
+/// ```rust,no_run
+/// # use mongodb_voyageai::{Client, model};
+/// # #[tokio::main]
+/// # async fn main() -> Result<(), mongodb_voyageai::Error> {
+/// let client = Client::with_api_key("pa-...")?;
+///
+/// // Minimal — single text, all defaults
+/// let embed = client
+///     .embed(vec!["Hello world".into()])
+///     .send()
+///     .await?;
+///
+/// // Fully configured
+/// let embed = client
+///     .embed(vec!["doc one".into(), "doc two".into()])
+///     .model(model::VOYAGE_3_LARGE)
+///     .input_type("document")
+///     .truncation(true)
+///     .output_dimension(512)
+///     .send()
+///     .await?;
+/// # Ok(())
+/// # }
+/// ```
+pub struct EmbedBuilder<'a> {
+    client: &'a Client,
+    input: Vec<String>,
+    model: &'a str,
+    input_type: Option<&'a str>,
+    truncation: Option<bool>,
+    output_dimension: Option<u32>,
+}
+
+impl<'a> EmbedBuilder<'a> {
+    fn new(client: &'a Client, input: Vec<String>) -> Self {
+        Self {
+            client,
             input,
-            model: embed_model.unwrap_or(model::VOYAGE).to_string(),
-            input_type: input_type.map(|s| s.to_string()),
-            truncation,
-            output_dimension,
+            model: model::VOYAGE,
+            input_type: None,
+            truncation: None,
+            output_dimension: None,
+        }
+    }
+
+    /// Overrides the embedding model.
+    ///
+    /// Defaults to [`model::VOYAGE`] when not set.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,no_run
+    /// # use mongodb_voyageai::{Client, model};
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), mongodb_voyageai::Error> {
+    /// # let client = Client::with_api_key("pa-...")?;
+    /// let embed = client
+    ///     .embed(vec!["text".into()])
+    ///     .model(model::VOYAGE_3_LARGE)
+    ///     .send()
+    ///     .await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn model(mut self, model: &'a str) -> Self {
+        self.model = model;
+        self
+    }
+
+    /// Sets the input type hint for the model.
+    ///
+    /// Accepted values are `"query"` and `"document"`. Providing the correct
+    /// type improves retrieval quality for asymmetric search tasks.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,no_run
+    /// # use mongodb_voyageai::Client;
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), mongodb_voyageai::Error> {
+    /// # let client = Client::with_api_key("pa-...")?;
+    /// // Embed a search query
+    /// let query_embed = client
+    ///     .embed(vec!["what is rust ownership?".into()])
+    ///     .input_type("query")
+    ///     .send()
+    ///     .await?;
+    ///
+    /// // Embed documents to store
+    /// let doc_embed = client
+    ///     .embed(vec!["Ownership is Rust's memory model...".into()])
+    ///     .input_type("document")
+    ///     .send()
+    ///     .await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn input_type(mut self, input_type: &'a str) -> Self {
+        self.input_type = Some(input_type);
+        self
+    }
+
+    /// Enables or disables truncation of inputs that exceed the model's token limit.
+    ///
+    /// When `true`, long inputs are silently truncated instead of returning an
+    /// error. Defaults to the API's own default when not set.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,no_run
+    /// # use mongodb_voyageai::Client;
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), mongodb_voyageai::Error> {
+    /// # let client = Client::with_api_key("pa-...")?;
+    /// let embed = client
+    ///     .embed(vec!["A very long document...".into()])
+    ///     .truncation(true)
+    ///     .send()
+    ///     .await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn truncation(mut self, truncation: bool) -> Self {
+        self.truncation = Some(truncation);
+        self
+    }
+
+    /// Reduces the output embedding to the given number of dimensions.
+    ///
+    /// Smaller dimensions lower storage and compute costs at a potential
+    /// trade-off in retrieval accuracy. Only supported by models that
+    /// advertise Matryoshka Representation Learning (MRL).
+    ///
+    /// # Examples
+    ///
+    /// ```rust,no_run
+    /// # use mongodb_voyageai::{Client, model};
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), mongodb_voyageai::Error> {
+    /// # let client = Client::with_api_key("pa-...")?;
+    /// let embed = client
+    ///     .embed(vec!["compact representation".into()])
+    ///     .model(model::VOYAGE_3_LARGE)
+    ///     .output_dimension(512)
+    ///     .send()
+    ///     .await?;
+    ///
+    /// assert_eq!(embed.embedding(0).unwrap().len(), 512);
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn output_dimension(mut self, dim: u32) -> Self {
+        self.output_dimension = Some(dim);
+        self
+    }
+
+    /// Sends the embedding request and returns the result.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::RequestError`] — API returned a non-2xx status.
+    /// - [`Error::Http`] — Network or transport failure.
+    /// - [`Error::Json`] — Response body could not be parsed.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,no_run
+    /// # use mongodb_voyageai::Client;
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), mongodb_voyageai::Error> {
+    /// # let client = Client::with_api_key("pa-...")?;
+    /// let embed = client
+    ///     .embed(vec!["Hello world".into()])
+    ///     .send()
+    ///     .await?;
+    ///
+    /// println!("dimensions: {}", embed.embedding(0).unwrap().len());
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn send(self) -> Result<Embed, Error> {
+        let payload = EmbedInput {
+            input: self.input,
+            model: self.model.to_string(),
+            input_type: self.input_type.map(|s| s.to_string()),
+            truncation: self.truncation,
+            output_dimension: self.output_dimension,
         };
 
-        let url = format!("{}/{}/embeddings", self.host, self.version);
-        let response = self.http.post(&url).json(&payload).send().await?;
+        let url = format!("{}/{}/embeddings", self.client.host, self.client.version);
+        let response = self.client.http.post(&url).json(&payload).send().await?;
 
         let status = response.status();
         let body = response.text().await?;
@@ -325,21 +552,94 @@ impl Client {
 
         Ok(Embed::parse(&body)?)
     }
+}
 
-    /// Reranks documents by relevance to a query.
+// ─── RerankBuilder ───────────────────────────────────────────────────────────
+
+/// A builder for constructing and sending rerank requests.
+///
+/// Created via [`Client::rerank`]. Chain setter methods to configure optional
+/// parameters, then call [`send`](RerankBuilder::send) to execute the request.
+///
+/// # Examples
+///
+/// ```rust,no_run
+/// # use mongodb_voyageai::{Client, model};
+/// # #[tokio::main]
+/// # async fn main() -> Result<(), mongodb_voyageai::Error> {
+/// let client = Client::with_api_key("pa-...")?;
+///
+/// // Minimal — default model, all results
+/// let rerank = client
+///     .rerank(
+///         "Who fixes pipes?",
+///         vec!["Paul is a plumber.".into(), "John is a musician.".into()],
+///     )
+///     .send()
+///     .await?;
+///
+/// // Fully configured
+/// let rerank = client
+///     .rerank(
+///         "Who fixes pipes?",
+///         vec!["Paul is a plumber.".into(), "John is a musician.".into()],
+///     )
+///     .model(model::RERANK)
+///     .top_k(1)
+///     .truncation(true)
+///     .send()
+///     .await?;
+/// # Ok(())
+/// # }
+/// ```
+pub struct RerankBuilder<'a> {
+    client: &'a Client,
+    query: &'a str,
+    documents: Vec<String>,
+    model: &'a str,
+    top_k: Option<u32>,
+    truncation: Option<bool>,
+}
+
+impl<'a> RerankBuilder<'a> {
+    fn new(client: &'a Client, query: &'a str, documents: Vec<String>) -> Self {
+        Self {
+            client,
+            query,
+            documents,
+            model: model::RERANK,
+            top_k: None,
+            truncation: None,
+        }
+    }
+
+    /// Overrides the reranking model.
     ///
-    /// # Arguments
+    /// Defaults to [`model::RERANK`] when not set.
     ///
-    /// * `query` — The search query.
-    /// * `documents` — Documents to rerank.
-    /// * `rerank_model` — Model name (defaults to [`model::RERANK`]).
-    /// * `top_k` — Return only the top K results (optional).
-    /// * `truncation` — Truncate long inputs (optional).
+    /// # Examples
     ///
-    /// # Errors
+    /// ```rust,no_run
+    /// # use mongodb_voyageai::{Client, model};
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), mongodb_voyageai::Error> {
+    /// # let client = Client::with_api_key("pa-...")?;
+    /// let rerank = client
+    ///     .rerank("query", vec!["doc".into()])
+    ///     .model(model::RERANK)
+    ///     .send()
+    ///     .await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn model(mut self, model: &'a str) -> Self {
+        self.model = model;
+        self
+    }
+
+    /// Returns only the top K highest-scoring documents.
     ///
-    /// Returns [`Error::RequestError`] on non-2xx responses, [`Error::Http`]
-    /// on network failures, or [`Error::Json`] on parse failures.
+    /// When not set, all documents are returned in ranked order.
     ///
     /// # Examples
     ///
@@ -347,43 +647,92 @@ impl Client {
     /// # use mongodb_voyageai::Client;
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), mongodb_voyageai::Error> {
-    /// let client = Client::with_api_key("pa-...")?;
-    ///
+    /// # let client = Client::with_api_key("pa-...")?;
     /// let rerank = client
     ///     .rerank(
     ///         "Who fixes pipes?",
-    ///         vec![
-    ///             "Paul is a plumber.".into(),
-    ///             "John is a musician.".into(),
-    ///         ],
-    ///         None,
-    ///         Some(1), // top 1 result only
-    ///         None,
+    ///         vec!["Paul is a plumber.".into(), "John is a musician.".into()],
     ///     )
+    ///     .top_k(1)
+    ///     .send()
     ///     .await?;
     ///
-    /// println!("best: index={} score={}", rerank.results[0].index, rerank.results[0].relevance_score);
+    /// assert_eq!(rerank.results.len(), 1);
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn rerank(
-        &self,
-        query: &str,
-        documents: Vec<String>,
-        rerank_model: Option<&str>,
-        top_k: Option<u32>,
-        truncation: Option<bool>,
-    ) -> Result<Rerank, Error> {
+    pub fn top_k(mut self, top_k: u32) -> Self {
+        self.top_k = Some(top_k);
+        self
+    }
+
+    /// Enables or disables truncation of inputs that exceed the model's token limit.
+    ///
+    /// When `true`, long inputs are silently truncated instead of returning an
+    /// error. Defaults to the API's own default when not set.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,no_run
+    /// # use mongodb_voyageai::Client;
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), mongodb_voyageai::Error> {
+    /// # let client = Client::with_api_key("pa-...")?;
+    /// let rerank = client
+    ///     .rerank("query", vec!["a very long document...".into()])
+    ///     .truncation(true)
+    ///     .send()
+    ///     .await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn truncation(mut self, truncation: bool) -> Self {
+        self.truncation = Some(truncation);
+        self
+    }
+
+    /// Sends the rerank request and returns the result.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::RequestError`] — API returned a non-2xx status.
+    /// - [`Error::Http`] — Network or transport failure.
+    /// - [`Error::Json`] — Response body could not be parsed.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,no_run
+    /// # use mongodb_voyageai::Client;
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), mongodb_voyageai::Error> {
+    /// # let client = Client::with_api_key("pa-...")?;
+    /// let rerank = client
+    ///     .rerank(
+    ///         "Who fixes pipes?",
+    ///         vec!["Paul is a plumber.".into(), "John is a musician.".into()],
+    ///     )
+    ///     .send()
+    ///     .await?;
+    ///
+    /// println!(
+    ///     "best: index={} score={}",
+    ///     rerank.results[0].index,
+    ///     rerank.results[0].relevance_score,
+    /// );
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn send(self) -> Result<Rerank, Error> {
         let payload = RerankInput {
-            query: query.to_string(),
-            documents,
-            model: rerank_model.unwrap_or(model::RERANK).to_string(),
-            top_k,
-            truncation,
+            query: self.query.to_string(),
+            documents: self.documents,
+            model: self.model.to_string(),
+            top_k: self.top_k,
+            truncation: self.truncation,
         };
 
-        let url = format!("{}/{}/rerank", self.host, self.version);
-        let response = self.http.post(&url).json(&payload).send().await?;
+        let url = format!("{}/{}/rerank", self.client.host, self.client.version);
+        let response = self.client.http.post(&url).json(&payload).send().await?;
 
         let status = response.status();
         let body = response.text().await?;
@@ -556,5 +905,52 @@ mod tests {
         let json = serde_json::to_value(&input).unwrap();
         assert_eq!(json["top_k"], 5);
         assert_eq!(json["truncation"], false);
+    }
+
+    #[test]
+    fn embed_builder_defaults() {
+        let client = Client::with_api_key("key12345").unwrap();
+        let builder = client.embed(vec!["text".into()]);
+        assert_eq!(builder.model, model::VOYAGE);
+        assert!(builder.input_type.is_none());
+        assert!(builder.truncation.is_none());
+        assert!(builder.output_dimension.is_none());
+    }
+
+    #[test]
+    fn embed_builder_setters() {
+        let client = Client::with_api_key("key12345").unwrap();
+        let builder = client
+            .embed(vec!["text".into()])
+            .model(model::VOYAGE_3_LARGE)
+            .input_type("document")
+            .truncation(true)
+            .output_dimension(256);
+        assert_eq!(builder.model, model::VOYAGE_3_LARGE);
+        assert_eq!(builder.input_type, Some("document"));
+        assert_eq!(builder.truncation, Some(true));
+        assert_eq!(builder.output_dimension, Some(256));
+    }
+
+    #[test]
+    fn rerank_builder_defaults() {
+        let client = Client::with_api_key("key12345").unwrap();
+        let builder = client.rerank("query", vec!["doc".into()]);
+        assert_eq!(builder.model, model::RERANK);
+        assert!(builder.top_k.is_none());
+        assert!(builder.truncation.is_none());
+    }
+
+    #[test]
+    fn rerank_builder_setters() {
+        let client = Client::with_api_key("key12345").unwrap();
+        let builder = client
+            .rerank("query", vec!["doc".into()])
+            .model(model::RERANK)
+            .top_k(3)
+            .truncation(false);
+        assert_eq!(builder.model, model::RERANK);
+        assert_eq!(builder.top_k, Some(3));
+        assert_eq!(builder.truncation, Some(false));
     }
 }

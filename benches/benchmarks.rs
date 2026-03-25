@@ -252,9 +252,7 @@ fn bench_client_embed_roundtrip(c: &mut Criterion) {
                 timeout: None,
             };
             let client = Client::new(&config).unwrap();
-            let result = client
-                .embed(vec!["benchmark".into()], None, None, None, None)
-                .await;
+            let result = client.embed(vec!["benchmark".into()]).send().await;
             black_box(result.unwrap());
         });
     });
@@ -288,9 +286,7 @@ fn bench_client_rerank_roundtrip(c: &mut Criterion) {
                 timeout: None,
             };
             let client = Client::new(&config).unwrap();
-            let result = client
-                .rerank("query", vec!["document".into()], None, None, None)
-                .await;
+            let result = client.rerank("query", vec!["document".into()]).send().await;
             black_box(result.unwrap());
         });
     });

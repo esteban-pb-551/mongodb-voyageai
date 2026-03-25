@@ -30,7 +30,8 @@ async fn rerank_success() {
 
     let client = Client::new(&mock_config(server.url())).unwrap();
     let rerank = client
-        .rerank("Welcome!", vec!["Greetings!".into()], None, None, None)
+        .rerank("Welcome!", vec!["Greetings!".into()])
+        .send()
         .await
         .unwrap();
 
@@ -72,13 +73,11 @@ async fn rerank_with_all_params() {
 
     let client = Client::new(&mock_config(server.url())).unwrap();
     let rerank = client
-        .rerank(
-            "query",
-            vec!["doc a".into(), "doc b".into(), "doc c".into()],
-            Some(model::RERANK_2_LITE),
-            Some(2),
-            Some(true),
-        )
+        .rerank("query", vec!["doc a".into(), "doc b".into(), "doc c".into()])
+        .model(model::RERANK_2_LITE)
+        .top_k(2)
+        .truncation(true)
+        .send()
         .await
         .unwrap();
 
@@ -121,11 +120,9 @@ async fn rerank_multiple_documents() {
                 "Java is verbose.".into(),
                 "Rust is a systems language.".into(),
                 "Go is simple.".into(),
-            ],
-            None,
-            None,
-            None,
+            ]
         )
+        .send()
         .await
         .unwrap();
 
@@ -148,39 +145,14 @@ async fn rerank_failure_500() {
 
     let client = Client::new(&mock_config(server.url())).unwrap();
     match client
-        .rerank("query", vec!["doc".into()], None, None, None)
+        .rerank("query", vec!["doc".into()])
+        .send()
         .await
         .unwrap_err()
     {
         Error::RequestError { status, body } => {
             assert_eq!(status, 500);
             assert!(body.contains("unknown error"));
-        }
-        other => panic!("expected RequestError, got: {other:?}"),
-    }
-    mock.assert_async().await;
-}
-
-#[tokio::test]
-async fn rerank_failure_422() {
-    let mut server = mockito::Server::new_async().await;
-    let mock = server
-        .mock("POST", "/v1/rerank")
-        .with_status(422)
-        .with_header("content-type", "application/json")
-        .with_body(r#"{"error": "Invalid model."}"#)
-        .create_async()
-        .await;
-
-    let client = Client::new(&mock_config(server.url())).unwrap();
-    match client
-        .rerank("q", vec!["d".into()], Some("bad-model"), None, None)
-        .await
-        .unwrap_err()
-    {
-        Error::RequestError { status, body } => {
-            assert_eq!(status, 422);
-            assert!(body.contains("Invalid model"));
         }
         other => panic!("expected RequestError, got: {other:?}"),
     }

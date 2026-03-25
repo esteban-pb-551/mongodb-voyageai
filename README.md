@@ -14,7 +14,7 @@ Add `mongodb-voyageai` to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-mongodb-voyageai = "0.0.4"
+mongodb-voyageai = "0.0.5"
 tokio = { version = "1", features = ["full"] }
 ```
 
@@ -23,7 +23,7 @@ Requires **Rust edition 2024** (rustc 1.85+).
 ## Quick Start
 
 ```rust
-use mongodb_voyageai::{Client, Config};
+use mongodb_voyageai::{Client, Config, model};
 
 #[tokio::main]
 async fn main() -> Result<(), mongodb_voyageai::Error> {
@@ -32,7 +32,9 @@ async fn main() -> Result<(), mongodb_voyageai::Error> {
 
     // Generate an embedding
     let embed = client
-        .embed(vec!["A quick brown fox jumps over the lazy dog.".into()], None, None, None, None)
+        .embed(vec!["A quick brown fox jumps over the lazy dog.".into()])
+        .model(model::VOYAGE_4_LITE)
+        .send()
         .await?;
 
     println!("model: {}", embed.model);
@@ -43,32 +45,7 @@ async fn main() -> Result<(), mongodb_voyageai::Error> {
 }
 ```
 
-## Usage
-
-### Embeddings
-
-#### Single Embedding
-
-```rust
-use mongodb_voyageai::{Client, Config};
-
-#[tokio::main]
-async fn main() -> Result<(), mongodb_voyageai::Error> {
-    let client = Client::new(&Config::new())?;
-
-    let embed = client
-        .embed(vec!["A quick brown fox jumps over the lazy dog.".into()], None, None, None, None)
-        .await?;
-
-    println!("{}", embed.model);                  // "voyage-4"
-    println!("{}", embed.usage.total_tokens);      // 11
-    println!("{:?}", embed.embedding(0).unwrap()); // [0.0, ...]
-
-    Ok(())
-}
-```
-
-#### Multiple Embeddings
+### Multiple Embeddings
 
 ```rust
 use mongodb_voyageai::{Client, Config};
@@ -84,7 +61,11 @@ async fn main() -> Result<(), mongodb_voyageai::Error> {
         "Ringo is a doctor.".into(),
     ];
 
-    let embed = client.embed(input, None, Some("document"), None, None).await?;
+    let embed = client
+        .embed(input)
+        .input_type("document")
+        .send()
+        .await?;
 
     println!("{}", embed.model);                // "voyage-4"
     println!("{}", embed.usage.total_tokens);    // total tokens used
@@ -95,12 +76,12 @@ async fn main() -> Result<(), mongodb_voyageai::Error> {
 }
 ```
 
-#### Embed Parameters
+### Embed Parameters
 
 | Parameter          | Type            | Default              | Description                            |
 |--------------------|-----------------|----------------------|----------------------------------------|
-| `input`            | `Vec<String>`   | *required*           | Texts to embed                         |
-| `embed_model`      | `Option<&str>`  | `"voyage-4"`         | Model identifier                       |
+| `embed`            | `Vec<String>`   | *required*           | Texts to embed                         |
+| `model`            | `Option<model>` | `VOYAGE_4`           | Model identifier                       |
 | `input_type`       | `Option<&str>`  | `None`               | `"query"` or `"document"`              |
 | `truncation`       | `Option<bool>`  | `None`               | Truncate inputs exceeding context       |
 | `output_dimension` | `Option<u32>`   | `None`               | Reduce embedding dimensionality         |
@@ -126,11 +107,10 @@ async fn main() -> Result<(), mongodb_voyageai::Error> {
     let rerank = client
         .rerank(
             query,
-            documents.iter().map(|s| s.to_string()).collect(),
-            None,
-            Some(3),
-            None,
+            documents.iter().map(|s| s.to_string()).collect()
         )
+        .top_k(3)
+        .send()
         .await?;
 
     println!("Model:        {}", rerank.model);
@@ -233,7 +213,7 @@ All fallible operations return `Result<T, mongodb_voyageai::Error>`:
 ```rust
 use mongodb_voyageai::Error;
 
-match client.embed(vec!["hello".into()], None, None, None, None).await {
+match client.embed(vec!["hello".into()]).send().await {
     Ok(embed) => println!("Got {} embeddings", embed.embeddings.len()),
     Err(Error::MissingApiKey) => eprintln!("Set VOYAGEAI_API_KEY"),
     Err(Error::RequestError { status, body }) => eprintln!("HTTP {status}: {body}"),

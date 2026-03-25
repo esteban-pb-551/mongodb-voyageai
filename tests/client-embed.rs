@@ -31,7 +31,8 @@ async fn embed_success() {
 
     let client = Client::new(&mock_config(server.url())).unwrap();
     let embed = client
-        .embed(vec!["Greetings!".into()], None, None, None, None)
+        .embed(vec!["Greetings!".into()])
+        .send()
         .await
         .unwrap();
 
@@ -48,7 +49,7 @@ async fn embed_with_all_params() {
         .mock("POST", "/v1/embeddings")
         .match_body(mockito::Matcher::Json(serde_json::json!({
             "input": ["Test input"],
-            "model": "voyage-3-large",
+            "model": "voyage-4",
             "input_type": "document",
             "truncation": true,
             "output_dimension": 512
@@ -59,7 +60,7 @@ async fn embed_with_all_params() {
             r#"{
             "object": "list",
             "data": [{"object": "embedding", "embedding": [0.1, 0.2]}],
-            "model": "voyage-3-large",
+            "model": "voyage-4",
             "usage": {"total_tokens": 5}
         }"#,
         )
@@ -68,17 +69,16 @@ async fn embed_with_all_params() {
 
     let client = Client::new(&mock_config(server.url())).unwrap();
     let embed = client
-        .embed(
-            vec!["Test input".into()],
-            Some(model::VOYAGE_3_LARGE),
-            Some("document"),
-            Some(true),
-            Some(512),
-        )
+        .embed(vec!["Test input".into()])
+        .model(model::VOYAGE)
+        .input_type("document")
+        .truncation(true)
+        .output_dimension(512)
+        .send()
         .await
         .unwrap();
 
-    assert_eq!(embed.model, "voyage-3-large");
+    assert_eq!(embed.model, "voyage-4");
     assert_eq!(embed.embeddings[0], vec![0.1, 0.2]);
     mock.assert_async().await;
 }
@@ -107,13 +107,8 @@ async fn embed_multiple_inputs() {
 
     let client = Client::new(&mock_config(server.url())).unwrap();
     let embed = client
-        .embed(
-            vec!["one".into(), "two".into(), "three".into()],
-            None,
-            None,
-            None,
-            None,
-        )
+        .embed(vec!["one".into(), "two".into(), "three".into()])
+        .send()
         .await
         .unwrap();
 
@@ -148,13 +143,9 @@ async fn embed_custom_model() {
 
     let client = Client::new(&mock_config(server.url())).unwrap();
     let embed = client
-        .embed(
-            vec!["fn main() {}".into()],
-            Some(model::VOYAGE_CODE_3),
-            None,
-            None,
-            None,
-        )
+        .embed(vec!["fn main() {}".into()])
+        .model(model::VOYAGE_CODE_3)
+        .send()
         .await
         .unwrap();
 
@@ -175,7 +166,8 @@ async fn embed_failure_500() {
 
     let client = Client::new(&mock_config(server.url())).unwrap();
     let result = client
-        .embed(vec!["test".into()], None, None, None, None)
+        .embed(vec!["test".into()])
+        .send()
         .await;
 
     match result.unwrap_err() {
@@ -201,7 +193,8 @@ async fn embed_failure_401() {
 
     let client = Client::new(&mock_config(server.url())).unwrap();
     match client
-        .embed(vec!["test".into()], None, None, None, None)
+        .embed(vec!["test".into()])
+        .send()
         .await
         .unwrap_err()
     {
@@ -226,11 +219,7 @@ async fn embed_failure_429() {
         .await;
 
     let client = Client::new(&mock_config(server.url())).unwrap();
-    match client
-        .embed(vec!["test".into()], None, None, None, None)
-        .await
-        .unwrap_err()
-    {
+    match client.embed(vec!["test".into()]).send().await.unwrap_err() {
         Error::RequestError { status, .. } => assert_eq!(status, 429),
         other => panic!("expected RequestError, got: {other:?}"),
     }
@@ -264,7 +253,8 @@ async fn embed_uses_custom_version_in_url() {
     let client = Client::new(&config).unwrap();
     assert!(
         client
-            .embed(vec!["test".into()], None, None, None, None)
+            .embed(vec!["test".into()])
+            .send()
             .await
             .is_ok()
     );

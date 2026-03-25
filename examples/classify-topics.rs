@@ -25,13 +25,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Embed the topic labels
     let topic_embeds = client
-        .embed(
-            topics.iter().map(|s| s.to_string()).collect(),
-            None,
-            Some("document"),
-            None,
-            None,
-        )
+        .embed(topics.iter().map(|s| s.to_string()).collect())
+        .input_type("document")
+        .send()
         .await?;
 
     // Texts to classify
@@ -48,13 +44,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Embed the texts
     let text_embeds = client
-        .embed(
-            texts.iter().map(|s| s.to_string()).collect(),
-            None,
-            Some("document"),
-            None,
-            None,
-        )
+        .embed(texts.iter().map(|s| s.to_string()).collect())
+        .input_type("document")
+        .send()
         .await?;
 
     println!(

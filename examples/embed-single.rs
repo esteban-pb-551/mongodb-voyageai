@@ -6,9 +6,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Embed a single piece of text
     let text = "Rust is a systems programming language focused on safety and performance.";
-    let embed = client
-        .embed(vec![text.into()], None, None, None, None)
-        .await?;
+    let embed = client.embed(vec![text.into()]).send().await?;
 
     println!("Model: {}", embed.model);
     println!("Tokens used: {}", embed.usage.total_tokens);
@@ -19,13 +17,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Embed with a specific model and input type
     let embed_query = client
-        .embed(
-            vec!["What is Rust?".into()],
-            Some(model::VOYAGE_3),
-            Some("query"),
-            None,
-            None,
-        )
+        .embed(vec!["What is Rust?".into()])
+        .model(model::VOYAGE_3)
+        .input_type("query")
+        .send()
         .await?;
 
     println!("\nQuery embedding model: {}", embed_query.model);

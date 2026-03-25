@@ -1,4 +1,4 @@
-use mongodb_voyageai::{Client, Config};
+use mongodb_voyageai::{Client, Config, model};
 
 struct Entry {
     document: String,
@@ -35,7 +35,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     .collect();
 
     let embed_result = client
-        .embed(documents.clone(), None, Some("document"), None, None)
+        .embed(documents.clone())
+        .model(model::VOYAGE_4)
+        .input_type("document")
+        .send()
         .await?;
 
     let entries: Vec<Entry> = documents
@@ -59,7 +62,10 @@ async fn search(
     query: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let query_embed = client
-        .embed(vec![query.to_string()], None, Some("query"), None, None)
+        .embed(vec![query.to_string()])
+        .model(model::VOYAGE_4)
+        .input_type("query")
+        .send()
         .await?;
     let query_embedding = query_embed.embedding(0).expect("no embedding returned");
 
@@ -73,7 +79,10 @@ async fn search(
     let nearest: Vec<String> = sorted.iter().take(4).map(|e| e.document.clone()).collect();
 
     let rerank_result = client
-        .rerank(query, nearest.clone(), None, Some(2), None)
+        .rerank(query, nearest.clone())
+        .model(model::RERANK)
+        .top_k(1)
+        .send()
         .await?;
 
     println!("query={:?}", query);

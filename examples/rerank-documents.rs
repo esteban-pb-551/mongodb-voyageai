@@ -17,9 +17,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Rerank all documents — no top_k filter
     println!("=== Full ranking ===");
-    let rerank = client
-        .rerank(query, documents.clone(), None, None, None)
-        .await?;
+    let rerank = client.rerank(query, documents.clone()).send().await?;
 
     println!("Query: {:?}", query);
     println!("Model: {}", rerank.model);
@@ -36,7 +34,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Rerank with top_k=2 to get only the best matches
     println!("\n=== Top 2 only ===");
     let top2 = client
-        .rerank(query, documents.clone(), None, Some(2), None)
+        .rerank(query, documents.clone())
+        .model(model::RERANK)
+        .top_k(2)
+        .send()
         .await?;
 
     for result in &top2.results {
@@ -50,13 +51,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Rerank with the lite model
     println!("\n=== Using rerank-2.5-lite ===");
     let lite = client
-        .rerank(
-            query,
-            documents.clone(),
-            Some(model::RERANK_2_5_LITE),
-            Some(3),
-            None,
-        )
+        .rerank(query, documents.clone())
+        .model(model::RERANK_2_5_LITE)
+        .top_k(3)
+        .send()
         .await?;
 
     println!("Model: {}", lite.model);
