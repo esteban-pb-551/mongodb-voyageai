@@ -30,11 +30,7 @@ async fn embed_success() {
         .await;
 
     let client = Client::new(&mock_config(server.url())).unwrap();
-    let embed = client
-        .embed(vec!["Greetings!".into()])
-        .send()
-        .await
-        .unwrap();
+    let embed = client.embed("Greetings!").send().await.unwrap();
 
     assert_eq!(embed.model, "voyage-4");
     assert_eq!(embed.usage.total_tokens, 4);
@@ -69,7 +65,7 @@ async fn embed_with_all_params() {
 
     let client = Client::new(&mock_config(server.url())).unwrap();
     let embed = client
-        .embed(vec!["Test input".into()])
+        .embed("Test input")
         .model(model::VOYAGE)
         .input_type("document")
         .truncation(true)
@@ -107,7 +103,7 @@ async fn embed_multiple_inputs() {
 
     let client = Client::new(&mock_config(server.url())).unwrap();
     let embed = client
-        .embed(vec!["one".into(), "two".into(), "three".into()])
+        .embed(vec!["one", "two", "three"])
         .send()
         .await
         .unwrap();
@@ -143,7 +139,7 @@ async fn embed_custom_model() {
 
     let client = Client::new(&mock_config(server.url())).unwrap();
     let embed = client
-        .embed(vec!["fn main() {}".into()])
+        .embed("fn main() {}")
         .model(model::VOYAGE_CODE_3)
         .send()
         .await
@@ -165,12 +161,7 @@ async fn embed_failure_500() {
         .await;
 
     let client = Client::new(&mock_config(server.url())).unwrap();
-    let result = client
-        .embed(vec!["test".into()])
-        .send()
-        .await;
-
-    match result.unwrap_err() {
+    match client.embed("test").send().await.unwrap_err() {
         Error::RequestError { status, body } => {
             assert_eq!(status, 500);
             assert!(body.contains("unknown error"));
@@ -192,12 +183,7 @@ async fn embed_failure_401() {
         .await;
 
     let client = Client::new(&mock_config(server.url())).unwrap();
-    match client
-        .embed(vec!["test".into()])
-        .send()
-        .await
-        .unwrap_err()
-    {
+    match client.embed("test").send().await.unwrap_err() {
         Error::RequestError { status, body } => {
             assert_eq!(status, 401);
             assert!(body.contains("Invalid API key"));
@@ -219,7 +205,7 @@ async fn embed_failure_429() {
         .await;
 
     let client = Client::new(&mock_config(server.url())).unwrap();
-    match client.embed(vec!["test".into()]).send().await.unwrap_err() {
+    match client.embed("test").send().await.unwrap_err() {
         Error::RequestError { status, .. } => assert_eq!(status, 429),
         other => panic!("expected RequestError, got: {other:?}"),
     }
@@ -251,12 +237,6 @@ async fn embed_uses_custom_version_in_url() {
         timeout: None,
     };
     let client = Client::new(&config).unwrap();
-    assert!(
-        client
-            .embed(vec!["test".into()])
-            .send()
-            .await
-            .is_ok()
-    );
+    assert!(client.embed("test").send().await.is_ok());
     mock.assert_async().await;
 }

@@ -30,7 +30,7 @@ async fn rerank_success() {
 
     let client = Client::new(&mock_config(server.url())).unwrap();
     let rerank = client
-        .rerank("Welcome!", vec!["Greetings!".into()])
+        .rerank("Welcome!", "Greetings!")
         .send()
         .await
         .unwrap();
@@ -73,7 +73,7 @@ async fn rerank_with_all_params() {
 
     let client = Client::new(&mock_config(server.url())).unwrap();
     let rerank = client
-        .rerank("query", vec!["doc a".into(), "doc b".into(), "doc c".into()])
+        .rerank("query", vec!["doc a", "doc b", "doc c"])
         .model(model::RERANK_2_LITE)
         .top_k(2)
         .truncation(true)
@@ -116,11 +116,11 @@ async fn rerank_multiple_documents() {
         .rerank(
             "What is Rust?",
             vec![
-                "Python is a language.".into(),
-                "Java is verbose.".into(),
-                "Rust is a systems language.".into(),
-                "Go is simple.".into(),
-            ]
+                "Python is a language.",
+                "Java is verbose.",
+                "Rust is a systems language.",
+                "Go is simple.",
+            ],
         )
         .send()
         .await
@@ -145,7 +145,7 @@ async fn rerank_failure_500() {
 
     let client = Client::new(&mock_config(server.url())).unwrap();
     match client
-        .rerank("query", vec!["doc".into()])
+        .rerank("query", "doc")
         .send()
         .await
         .unwrap_err()

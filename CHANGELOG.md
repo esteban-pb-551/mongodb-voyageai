@@ -53,3 +53,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated default rerankking model from `rerank-2` to `rerank-2.5`
 
 [0.0.4]: https://github.com/esteban-pb-551/mongodb-voyageai/releases/tag/v0.0.4
+
+## [0.0.5] - 2026-03-26
+
+### Changed
+- `Client::embed` and `Client::rerank` now accepts [Method Chaining](https://stackoverflow.com/questions/74965709/chaining-methods-in-rust)
+
+[0.0.5]: https://github.com/esteban-pb-551/mongodb-voyageai/releases/tag/v0.0.5
+
+## [0.0.6] - 2026-03-26
+
+### Changed
+- `Client::embed` now accepts `&[S] where S: AsRef<str>` instead of `Vec<S>`,
+  allowing callers to pass a borrowed slice without transferring ownership
+- `Client::rerank` now accepts `&[S] where S: AsRef<str>` for `documents` by the same reason
+- Both methods internally convert to `Vec<String>`, so the public API of
+  `EmbedBuilder` and `RerankBuilder` is unchanged
+
+[0.0.6]: https://github.com/esteban-pb-551/mongodb-voyageai/releases/tag/v0.0.6

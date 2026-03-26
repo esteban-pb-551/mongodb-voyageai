@@ -14,7 +14,7 @@ Add `mongodb-voyageai` to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-mongodb-voyageai = "0.0.5"
+mongodb-voyageai = "0.0.6"
 tokio = { version = "1", features = ["full"] }
 ```
 
@@ -32,7 +32,7 @@ async fn main() -> Result<(), mongodb_voyageai::Error> {
 
     // Generate an embedding
     let embed = client
-        .embed(vec!["A quick brown fox jumps over the lazy dog.".into()])
+        .embed("A quick brown fox jumps over the lazy dog.")
         .model(model::VOYAGE_4_LITE)
         .send()
         .await?;
@@ -55,14 +55,14 @@ async fn main() -> Result<(), mongodb_voyageai::Error> {
     let client = Client::new(&Config::new())?;
 
     let input = vec![
-        "John is a musician.".into(),
-        "Paul is a plumber.".into(),
-        "George is a teacher.".into(),
-        "Ringo is a doctor.".into(),
+        "John is a musician.",
+        "Paul is a plumber.",
+        "George is a teacher.",
+        "Ringo is a doctor.",
     ];
 
     let embed = client
-        .embed(input)
+        .embed(&input)
         .input_type("document")
         .send()
         .await?;
@@ -95,7 +95,7 @@ use mongodb_voyageai::{Client, Config};
 async fn main() -> Result<(), mongodb_voyageai::Error> {
     let client = Client::new(&Config::new())?;
 
-    let query = "Who is the best person to call for a toilet?";
+    let query = "Who should I call if my pipes are leaking?";
 
     let documents = vec![
         "John is a musician.",
@@ -107,7 +107,7 @@ async fn main() -> Result<(), mongodb_voyageai::Error> {
     let rerank = client
         .rerank(
             query,
-            documents.iter().map(|s| s.to_string()).collect()
+            &documents
         )
         .top_k(3)
         .send()
@@ -213,7 +213,7 @@ All fallible operations return `Result<T, mongodb_voyageai::Error>`:
 ```rust
 use mongodb_voyageai::Error;
 
-match client.embed(vec!["hello".into()]).send().await {
+match client.embed("hello").send().await {
     Ok(embed) => println!("Got {} embeddings", embed.embeddings.len()),
     Err(Error::MissingApiKey) => eprintln!("Set VOYAGEAI_API_KEY"),
     Err(Error::RequestError { status, body }) => eprintln!("HTTP {status}: {body}"),
@@ -266,76 +266,6 @@ Zero-shot topic classification using cosine similarity between text embeddings a
 ```bash
 cargo run --example classify-topics
 ```
-
-### Running All Examples
-
-```bash
-export VOYAGEAI_API_KEY="pa-..."
-cargo run --example search
-cargo run --example embed-single
-cargo run --example rerank-documents
-cargo run --example classify-topics
-```
-
-## Project Structure
-
-```
-voyageai-rust/
-  src/
-    lib.rs          — Crate root, public re-exports, rustdoc
-    client.rs       — Async HTTP client (embed + rerank) + unit tests
-    config.rs       — Configuration (env vars, timeouts) + unit tests
-    model.rs        — Model name constants + unit tests
-    embed.rs        — Embedding response type + unit tests
-    rerank.rs       — Rerank response type + unit tests
-    reranking.rs    — Individual reranking result + unit tests
-    usage.rs        — Token usage type + unit tests
-  tests/
-    client-embed.rs     — Integration tests: embed endpoint (mockito)
-    client-rerank.rs    — Integration tests: rerank endpoint (mockito)
-  benches/
-    benchmarks.rs       — Criterion benchmarks (parsing, serialization, HTTP)
-  examples/
-    search.rs           — Semantic search (embed + rerank)
-    embed-single.rs     — Single & query embedding
-    rerank-documents.rs — Reranking with top-k and model comparison
-    classify-topics.rs  — Zero-shot topic classification
-```
-
-## Dependencies
-
-| Crate        | Version  | Purpose                               |
-|--------------|----------|---------------------------------------|
-| `reqwest`    | 0.13     | Async HTTP client (rustls TLS)        |
-| `serde`      | 1        | Serialization / deserialization        |
-| `serde_json` | 1        | JSON parsing                          |
-| `thiserror`  | 2        | Ergonomic error types                 |
-| `tokio`      | 1        | Async runtime                         |
-| `tracing`    | 0.1      | Structured logging                    |
-| `criterion`  | 0.5      | Benchmarking (dev only)               |
-| `mockito`    | 1        | HTTP mocking (dev only)               |
-
-## Testing
-
-```bash
-cargo test
-```
-
-The test suite has **105 tests** across three categories — no API key required:
-
-| Category | Location | Tests | Description |
-|----------|----------|-------|-------------|
-| Unit tests | `src/*.rs` | 62 | Inline `#[cfg(test)]` modules testing parsing, serialization, display, clone, error messages |
-| Integration tests | `tests/` | 13 | Async HTTP round-trips against a mock server (mockito) |
-| Doc-tests | `src/*.rs` | 30 | Runnable code examples embedded in rustdoc comments |
-
-## Benchmarks
-
-```bash
-cargo bench
-```
-
-Criterion benchmarks covering JSON parsing (1–100 embeddings/results), payload serialization, client construction, and full HTTP round-trips. Results are saved to `target/criterion/` with HTML reports.
 
 ## Documentation
 

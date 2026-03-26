@@ -14,7 +14,7 @@
 //! let client = Client::new(&Config::new())?;
 //!
 //! let embed = client
-//!     .embed(vec!["Hello, world!".into()])
+//!     .embed(vec!["Hello, world!"])
 //!     .send()
 //!     .await?;
 //!
@@ -35,14 +35,14 @@
 //!
 //! // Single embedding
 //! let embed = client
-//!     .embed(vec!["A quick brown fox.".into()])
+//!     .embed(vec!["A quick brown fox."])
 //!     .send()
 //!     .await?;
 //! let vector = embed.embedding(0).unwrap();
 //!
 //! // Multiple embeddings with a specific model
 //! let embed = client
-//!     .embed(vec!["doc one".into(), "doc two".into()])
+//!     .embed(vec!["doc one", "doc two"])
 //!     .model(model::VOYAGE_3)
 //!     .input_type("document")
 //!     .send()
@@ -64,7 +64,7 @@
 //! let rerank = client
 //!     .rerank(
 //!         "Who fixes pipes?",
-//!         vec!["Paul is a plumber.".into(), "John is a musician.".into()]
+//!         vec!["Paul is a plumber.", "John is a musician."]
 //!     )
 //!     .send()
 //!     .await?;
@@ -95,7 +95,7 @@
 //! # #[tokio::main]
 //! # async fn main() {
 //! # let client = Client::with_api_key("pa-...").unwrap();
-//! match client.embed(vec!["hello".into()]).send().await {
+//! match client.embed(vec!["hello"]).send().await {
 //!     Ok(embed) => println!("{} embeddings", embed.embeddings.len()),
 //!     Err(Error::MissingApiKey) => eprintln!("set VOYAGEAI_API_KEY"),
 //!     Err(Error::RequestError { status, body }) => eprintln!("HTTP {status}: {body}"),

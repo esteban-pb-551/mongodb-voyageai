@@ -1,76 +1,96 @@
-use mongodb_voyageai::{Client, Config};
+//! Reranking example.
+//!
+//! Shows the three most common reranking patterns:
+//!
+//! 1. **Full ranking** — score all documents and return them in order.
+//! 2. **Top-K** — return only the N highest-scoring documents.
+//! 3. **Alternate model** — swap in a lighter model to trade accuracy for speed.
+//!
+//! # What is reranking?
+//!
+//! A reranker is a *cross-encoder*: it scores each (query, document) pair
+//! jointly rather than comparing independent vectors. This is slower than
+//! embedding similarity but significantly more accurate, making it ideal as a
+//! second stage after a fast nearest-neighbour retrieval step.
 
-fn cosine_similarity(a: &[f64], b: &[f64]) -> f64 {
-    let dot: f64 = a.iter().zip(b.iter()).map(|(x, y)| x * y).sum();
-    let norm_a: f64 = a.iter().map(|x| x * x).sum::<f64>().sqrt();
-    let norm_b: f64 = b.iter().map(|x| x * x).sum::<f64>().sqrt();
-    if norm_a == 0.0 || norm_b == 0.0 {
-        return 0.0;
-    }
-    dot / (norm_a * norm_b)
-}
+use mongodb_voyageai::{Client, Config, model};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client = Client::new(&Config::new())?;
 
-    // Define topic labels
-    let topics = [
-        "Technology and programming",
-        "Cooking and food",
-        "Sports and athletics",
-        "Music and entertainment",
-        "Science and research",
+    let query = "Who should I call if my pipes are leaking?";
+
+    // The corpus is defined once as a `Vec<&str>`.
+    // All three rerank calls below pass `&documents` as a slice, so this
+    // binding stays alive and can be used to look up the original text via
+    // `result.index` after each call — no `.clone()` needed.
+    let documents = vec![
+        "John is a musician who plays guitar in a local band.",
+        "Paul is a licensed plumber with 15 years of experience.",
+        "George is a high school math teacher.",
+        "Ringo is a doctor specializing in cardiology.",
+        "Lisa is a corporate lawyer at a downtown firm.",
+        "Stuart is a painter who exhibits in galleries.",
     ];
 
-    // Embed the topic labels
-    let topic_embeds = client
-        .embed(topics.iter().map(|s| s.to_string()).collect())
-        .input_type("document")
+    // ── Example 1: full ranking ───────────────────────────────────────────────
+    // Without `.top_k()` the API returns all documents sorted by relevance.
+    // The default model is `model::RERANK`; omitting `.model()` is equivalent
+    // to calling `.model(model::RERANK)` explicitly.
+    println!("=== Full ranking ===");
+    let rerank = client.rerank(query, &documents).send().await?;
+
+    println!("Query:       {:?}", query);
+    println!("Model:       {}", rerank.model);
+    println!("Tokens used: {}", rerank.usage.total_tokens);
+    println!();
+    for result in &rerank.results {
+        // `result.index` is the position of the document in the original slice,
+        // so we can recover the text without storing it a second time.
+        println!(
+            "  [{}] score={:.4}  {:?}",
+            result.index, result.relevance_score, documents[result.index]
+        );
+    }
+
+    // ── Example 2: top-K filter ───────────────────────────────────────────────
+    // `.top_k(n)` asks the API to return only the n highest-scoring results.
+    // Useful when you only care about the best matches and want to save on
+    // response size and downstream processing.
+    println!("\n=== Top 2 only ===");
+    let top2 = client
+        .rerank(query, &documents)
+        .model(model::RERANK)
+        .top_k(2)
         .send()
         .await?;
 
-    // Texts to classify
-    let texts = [
-        "Rust's borrow checker prevents data races at compile time.",
-        "The sourdough bread needs to proof for at least 12 hours.",
-        "She finished the marathon in under three hours.",
-        "The new album features a blend of jazz and electronic music.",
-        "The researchers published their findings on CRISPR gene editing.",
-        "Python is great for machine learning prototyping.",
-        "Add a pinch of saffron to the risotto for extra flavor.",
-        "The goalkeeper made an incredible save in the final minute.",
-    ];
+    for result in &top2.results {
+        println!(
+            "  [{}] score={:.4}  {:?}",
+            result.index, result.relevance_score, documents[result.index]
+        );
+    }
 
-    // Embed the texts
-    let text_embeds = client
-        .embed(texts.iter().map(|s| s.to_string()).collect())
-        .input_type("document")
+    // ── Example 3: lite model ─────────────────────────────────────────────────
+    // `model::RERANK_2_5_LITE` is a smaller, faster variant that trades a small
+    // amount of accuracy for lower latency and cost. A good choice when reranking
+    // large candidate sets or in latency-sensitive pipelines.
+    println!("\n=== Using rerank-2.5-lite ===");
+    let lite = client
+        .rerank(query, &documents)
+        .model(model::RERANK_2_5_LITE)
+        .top_k(3)
         .send()
         .await?;
 
-    println!(
-        "Tokens used: {}\n",
-        text_embeds.usage.total_tokens + topic_embeds.usage.total_tokens
-    );
-
-    // Classify each text by finding the most similar topic
-    for (i, text) in texts.iter().enumerate() {
-        let text_emb = text_embeds.embedding(i).unwrap();
-
-        let mut best_topic = "";
-        let mut best_score = f64::NEG_INFINITY;
-
-        for (j, topic) in topics.iter().enumerate() {
-            let topic_emb = topic_embeds.embedding(j).unwrap();
-            let sim = cosine_similarity(text_emb, topic_emb);
-            if sim > best_score {
-                best_score = sim;
-                best_topic = topic;
-            }
-        }
-
-        println!("[{:.4}] {:<45} => {}", best_score, text, best_topic);
+    println!("Model: {}", lite.model);
+    for result in &lite.results {
+        println!(
+            "  [{}] score={:.4}  {:?}",
+            result.index, result.relevance_score, documents[result.index]
+        );
     }
 
     Ok(())

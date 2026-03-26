@@ -42,119 +42,6 @@ pub enum Error {
     Json(#[from] serde_json::Error),
 }
 
-// ─── IntoStringVec ───────────────────────────────────────────────────────────
-
-/// Conversion trait that allows [`Client::embed`] and [`Client::rerank`] to
-/// accept inputs in multiple forms without forcing the caller to allocate or
-/// move data unnecessarily.
-///
-/// Implemented for:
-///
-/// | Type              | Behaviour                                     |
-/// |-------------------|-----------------------------------------------|
-/// | `&str`            | Wraps the single string in a one-element vec. |
-/// | `String`          | Wraps the single string in a one-element vec. |
-/// | `&[S]`            | Borrows a slice — original binding stays live.|
-/// | `Vec<S>`          | Consumes the vec — no extra allocation.       |
-///
-/// Where `S: AsRef<str>` covers both `&str` and `String` for the slice/vec
-/// variants.
-///
-/// # Examples
-///
-/// ```rust
-/// use mongodb_voyageai::client::IntoStringVec;
-///
-/// // Single &str
-/// assert_eq!("hello".into_string_vec(), vec!["hello"]);
-///
-/// // Single String
-/// assert_eq!("world".to_string().into_string_vec(), vec!["world"]);
-///
-/// // Slice of &str (original stays borrowed, not moved)
-/// let docs = vec!["a", "b"];
-/// assert_eq!(docs.as_slice().into_string_vec(), vec!["a", "b"]);
-///
-/// // Vec<&str> (consumed, no extra allocation needed by the caller)
-/// assert_eq!(vec!["x", "y"].into_string_vec(), vec!["x", "y"]);
-/// ```
-pub trait IntoStringVec {
-    /// Converts `self` into a `Vec<String>`.
-    fn into_string_vec(self) -> Vec<String>;
-}
-
-/// Wraps a single `&str` in a one-element `Vec<String>`.
-impl IntoStringVec for &str {
-    fn into_string_vec(self) -> Vec<String> {
-        vec![self.to_owned()]
-    }
-}
-
-/// Wraps a single `String` in a one-element `Vec<String>`.
-impl IntoStringVec for String {
-    fn into_string_vec(self) -> Vec<String> {
-        vec![self]
-    }
-}
-
-/// Borrows a slice and copies each element into a new `Vec<String>`.
-///
-/// Because this implementation takes a shared reference, the original
-/// binding is **not** moved and can be used after the call.
-///
-/// ```rust
-/// use mongodb_voyageai::client::IntoStringVec;
-///
-/// let docs = vec!["first", "second"];
-/// let _ = docs.as_slice().into_string_vec();
-/// // `docs` is still accessible here
-/// println!("{}", docs[0]);
-/// ```
-impl<S: AsRef<str>> IntoStringVec for &[S] {
-    fn into_string_vec(self) -> Vec<String> {
-        self.iter().map(|s| s.as_ref().to_owned()).collect()
-    }
-}
-
-
-/// Borrows a `Vec<S>` without moving it.
-///
-/// Delegates to the `&[S]` implementation so that `&vec` and `&slice` behave
-/// identically. The original `Vec` remains accessible after the call.
-///
-/// ```rust
-/// use mongodb_voyageai::client::IntoStringVec;
-///
-/// let docs = vec!["a", "b"];
-/// let _ = (&docs).into_string_vec();
-/// // `docs` is still accessible here
-/// println!("{}", docs[0]);
-/// ```
-impl<S: AsRef<str>> IntoStringVec for &Vec<S> {
-    fn into_string_vec(self) -> Vec<String> {
-        self.as_slice().into_string_vec()
-    }
-}
-
-/// Consumes a `Vec<S>` and converts each element into a `String`.
-///
-/// Accepts both `Vec<&str>` and `Vec<String>`. When the element type is
-/// already `String`, the conversion is a no-op move.
-///
-/// ```rust
-/// use mongodb_voyageai::client::IntoStringVec;
-///
-/// let v: Vec<String> = vec!["a".to_string(), "b".to_string()];
-/// assert_eq!(v.into_string_vec(), vec!["a", "b"]);
-/// ```
-impl<S: AsRef<str>> IntoStringVec for Vec<S> {
-    fn into_string_vec(self) -> Vec<String> {
-        self.into_iter().map(|s| s.as_ref().to_owned()).collect()
-    }
-}
-
-// ─── Request payloads ────────────────────────────────────────────────────────
-
 /// The JSON payload sent to the `/embeddings` endpoint.
 ///
 /// # Examples
@@ -163,7 +50,7 @@ impl<S: AsRef<str>> IntoStringVec for Vec<S> {
 /// use mongodb_voyageai::client::EmbedInput;
 ///
 /// let input = EmbedInput {
-///     input: vec!["hello".into()],
+///     input: vec!["hello"].into(),
 ///     model: "voyage-4".into(),
 ///     input_type: Some("query".into()),
 ///     truncation: None,
@@ -227,8 +114,6 @@ pub struct RerankInput {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub truncation: Option<bool>,
 }
-
-// ─── Client ──────────────────────────────────────────────────────────────────
 
 /// An async client for the VoyageAI API.
 ///
@@ -367,122 +252,37 @@ impl Client {
 
     /// Creates an [`EmbedBuilder`] for the given input texts.
     ///
-    /// The `input` argument accepts any type that implements [`IntoStringVec`],
-    /// which covers the following without extra allocation on the caller side:
-    ///
-    /// | Argument type  | Example                                    |
-    /// |----------------|--------------------------------------------|
-    /// | `&str`         | `client.embed("single text")`              |
-    /// | `String`       | `client.embed(owned_string)`               |
-    /// | `&[S]`         | `client.embed(&docs)` — `docs` stays live  |
-    /// | `Vec<S>`       | `client.embed(vec!["a", "b"])`             |
-    ///
     /// Use the builder's setter methods to configure the request, then call
     /// [`send`](EmbedBuilder::send) to execute it.
     ///
     /// # Arguments
     ///
-    /// * `input` — One or more texts to embed. See the table above for
-    ///   accepted types.
+    /// * `input` — One or more texts to embed.
     ///
-    /// # Examples
-    ///
-    /// ```rust,no_run
-    /// # use mongodb_voyageai::{Client, model};
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), mongodb_voyageai::Error> {
-    /// let client = Client::with_api_key("pa-...")?;
-    ///
-    /// // Single &str
-    /// let embed = client.embed("Hello world").send().await?;
-    ///
-    /// // Slice — original vec stays available after the call
-    /// let docs = vec!["first doc", "second doc"];
-    /// let embed = client
-    ///     .embed(&docs)
-    ///     .model(model::VOYAGE_3_LARGE)
-    ///     .input_type("document")
-    ///     .send()
-    ///     .await?;
-    /// println!("original still accessible: {}", docs[0]);
-    ///
-    /// // Vec<&str> — consumed but no .into() boilerplate needed
-    /// let embed = client
-    ///     .embed(vec!["a", "b"])
-    ///     .input_type("query")
-    ///     .send()
-    ///     .await?;
-    ///
-    /// assert_eq!(embed.embeddings.len(), 2);
-    /// # Ok(())
-    /// # }
-    /// ```
-    pub fn embed<I: IntoStringVec>(&self, input: I) -> EmbedBuilder<'_> {
-        EmbedBuilder::new(self, input.into_string_vec())
+    pub fn embed<S: AsRef<str>>(&self, input: &[S]) -> EmbedBuilder<'_> {
+        EmbedBuilder::new(self, input.iter().map(|s| s.as_ref().to_owned()).collect())
     }
 
     /// Creates a [`RerankBuilder`] for the given query and documents.
-    ///
-    /// Both `query` and `documents` follow the same flexible input rules.
-    /// `query` accepts any `&str` or `String`. `documents` accepts any type
-    /// that implements [`IntoStringVec`]:
-    ///
-    /// | Argument type  | Example                                        |
-    /// |----------------|------------------------------------------------|
-    /// | `&str`         | `client.rerank("q", "single doc")`             |
-    /// | `String`       | `client.rerank("q", owned_string)`             |
-    /// | `&[S]`         | `client.rerank("q", &docs)` — `docs` stays live|
-    /// | `Vec<S>`       | `client.rerank("q", vec!["a", "b"])`           |
     ///
     /// Use the builder's setter methods to configure the request, then call
     /// [`send`](RerankBuilder::send) to execute it.
     ///
     /// # Arguments
     ///
-    /// * `query`     — The search query.
-    /// * `documents` — The documents to rerank. See the table above for
-    ///   accepted types.
+    /// * `query` — The search query.
+    /// * `documents` — The documents to rerank.
     ///
-    /// # Examples
-    ///
-    /// ```rust,no_run
-    /// # use mongodb_voyageai::Client;
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), mongodb_voyageai::Error> {
-    /// let client = Client::with_api_key("pa-...")?;
-    ///
-    /// // Slice — original vec stays available after the call
-    /// let docs = vec!["Paul is a plumber.", "John is a musician."];
-    /// let rerank = client
-    ///     .rerank("Who fixes pipes?", &docs)
-    ///     .top_k(1)
-    ///     .send()
-    ///     .await?;
-    /// println!("original still accessible: {}", docs[0]);
-    ///
-    /// // Vec<&str> — no .into() boilerplate
-    /// let rerank = client
-    ///     .rerank(
-    ///         "Who fixes pipes?",
-    ///         vec!["Paul is a plumber.", "John is a musician."],
-    ///     )
-    ///     .send()
-    ///     .await?;
-    ///
-    /// println!(
-    ///     "best: index={} score={}",
-    ///     rerank.results[0].index,
-    ///     rerank.results[0].relevance_score,
-    /// );
-    /// # Ok(())
-    /// # }
-    /// ```
-    pub fn rerank<'a, I: IntoStringVec>(
+    pub fn rerank<'a, S: AsRef<str>>(
         &'a self,
         query: &'a str,
-        documents: I,
+        documents: &'a [S],
     ) -> RerankBuilder<'a> {
-        RerankBuilder::new(self, query, documents.into_string_vec())
+        RerankBuilder::new(
+            self,
+            query,
+            documents.iter().map(|s| s.as_ref().to_owned()).collect(),
+        )
     }
 }
 
@@ -501,20 +301,21 @@ impl Client {
 /// # async fn main() -> Result<(), mongodb_voyageai::Error> {
 /// let client = Client::with_api_key("pa-...")?;
 ///
-/// // Minimal — single &str, all defaults
-/// let embed = client.embed("Hello world").send().await?;
-///
-/// // Slice — docs stays live after the call
-/// let docs = vec!["doc one", "doc two"];
+/// // Minimal — single text, all defaults
 /// let embed = client
-///     .embed(&docs)
+///     .embed(vec!["Hello world"])
+///     .send()
+///     .await?;
+///
+/// // Fully configured
+/// let embed = client
+///     .embed(vec!["doc one", "doc two"])
 ///     .model(model::VOYAGE_3_LARGE)
 ///     .input_type("document")
 ///     .truncation(true)
 ///     .output_dimension(512)
 ///     .send()
 ///     .await?;
-/// // docs is still accessible here
 /// # Ok(())
 /// # }
 /// ```
@@ -551,7 +352,7 @@ impl<'a> EmbedBuilder<'a> {
     /// # async fn main() -> Result<(), mongodb_voyageai::Error> {
     /// # let client = Client::with_api_key("pa-...")?;
     /// let embed = client
-    ///     .embed("text")
+    ///     .embed(vec!["text"])
     ///     .model(model::VOYAGE_3_LARGE)
     ///     .send()
     ///     .await?;
@@ -577,14 +378,14 @@ impl<'a> EmbedBuilder<'a> {
     /// # let client = Client::with_api_key("pa-...")?;
     /// // Embed a search query
     /// let query_embed = client
-    ///     .embed("what is rust ownership?")
+    ///     .embed(vec!["what is rust ownership?"])
     ///     .input_type("query")
     ///     .send()
     ///     .await?;
     ///
     /// // Embed documents to store
     /// let doc_embed = client
-    ///     .embed("Ownership is Rust's memory model...")
+    ///     .embed(vec!["Ownership is Rust's memory model..."])
     ///     .input_type("document")
     ///     .send()
     ///     .await?;
@@ -609,7 +410,7 @@ impl<'a> EmbedBuilder<'a> {
     /// # async fn main() -> Result<(), mongodb_voyageai::Error> {
     /// # let client = Client::with_api_key("pa-...")?;
     /// let embed = client
-    ///     .embed("A very long document...")
+    ///     .embed(vec!["A very long document..."])
     ///     .truncation(true)
     ///     .send()
     ///     .await?;
@@ -635,7 +436,7 @@ impl<'a> EmbedBuilder<'a> {
     /// # async fn main() -> Result<(), mongodb_voyageai::Error> {
     /// # let client = Client::with_api_key("pa-...")?;
     /// let embed = client
-    ///     .embed("compact representation")
+    ///     .embed(vec!["compact representation"])
     ///     .model(model::VOYAGE_3_LARGE)
     ///     .output_dimension(512)
     ///     .send()
@@ -665,7 +466,11 @@ impl<'a> EmbedBuilder<'a> {
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), mongodb_voyageai::Error> {
     /// # let client = Client::with_api_key("pa-...")?;
-    /// let embed = client.embed("Hello world").send().await?;
+    /// let embed = client
+    ///     .embed(vec!["Hello world"])
+    ///     .send()
+    ///     .await?;
+    ///
     /// println!("dimensions: {}", embed.embedding(0).unwrap().len());
     /// # Ok(())
     /// # }
@@ -711,16 +516,16 @@ impl<'a> EmbedBuilder<'a> {
 /// # async fn main() -> Result<(), mongodb_voyageai::Error> {
 /// let client = Client::with_api_key("pa-...")?;
 ///
-/// // Slice — docs stays live after the call
-/// let docs = vec!["Paul is a plumber.", "John is a musician."];
+/// // Minimal — default model, all results
 /// let rerank = client
-///     .rerank("Who fixes pipes?", &docs)
-///     .top_k(1)
+///     .rerank(
+///         "Who fixes pipes?",
+///         vec!["Paul is a plumber.", "John is a musician."],
+///     )
 ///     .send()
 ///     .await?;
-/// println!("original still accessible: {}", docs[0]);
 ///
-/// // Fully configured with Vec<&str>
+/// // Fully configured
 /// let rerank = client
 ///     .rerank(
 ///         "Who fixes pipes?",
@@ -767,7 +572,7 @@ impl<'a> RerankBuilder<'a> {
     /// # async fn main() -> Result<(), mongodb_voyageai::Error> {
     /// # let client = Client::with_api_key("pa-...")?;
     /// let rerank = client
-    ///     .rerank("query", "doc")
+    ///     .rerank("query", vec!["doc"])
     ///     .model(model::RERANK)
     ///     .send()
     ///     .await?;
@@ -821,7 +626,7 @@ impl<'a> RerankBuilder<'a> {
     /// # async fn main() -> Result<(), mongodb_voyageai::Error> {
     /// # let client = Client::with_api_key("pa-...")?;
     /// let rerank = client
-    ///     .rerank("query", "a very long document...")
+    ///     .rerank("query", vec!["a very long document..."])
     ///     .truncation(true)
     ///     .send()
     ///     .await?;
@@ -890,14 +695,10 @@ impl<'a> RerankBuilder<'a> {
     }
 }
 
-// ─── Tests ───────────────────────────────────────────────────────────────────
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use std::time::Duration;
-
-    // ── Client construction ──────────────────────────────────────────────────
 
     #[test]
     fn missing_api_key() {
@@ -958,8 +759,6 @@ mod tests {
         assert_eq!(format!("{:?}", client), format!("{:?}", cloned));
     }
 
-    // ── Error display ────────────────────────────────────────────────────────
-
     #[test]
     fn error_missing_api_key_display() {
         let msg = format!("{}", Error::MissingApiKey);
@@ -995,46 +794,6 @@ mod tests {
         let msg = format!("{}", Error::Json(json_err));
         assert!(!msg.is_empty());
     }
-
-    // ── IntoStringVec ────────────────────────────────────────────────────────
-
-    #[test]
-    fn into_string_vec_from_str() {
-        assert_eq!("hello".into_string_vec(), vec!["hello"]);
-    }
-
-    #[test]
-    fn into_string_vec_from_string() {
-        assert_eq!("world".to_string().into_string_vec(), vec!["world"]);
-    }
-
-    #[test]
-    fn into_string_vec_from_slice_str() {
-        let docs = vec!["a", "b", "c"];
-        assert_eq!(docs.as_slice().into_string_vec(), vec!["a", "b", "c"]);
-        // original still accessible
-        assert_eq!(docs[0], "a");
-    }
-
-    #[test]
-    fn into_string_vec_from_slice_string() {
-        let docs = vec!["x".to_string(), "y".to_string()];
-        assert_eq!(docs.as_slice().into_string_vec(), vec!["x", "y"]);
-        assert_eq!(docs[0], "x");
-    }
-
-    #[test]
-    fn into_string_vec_from_vec_str() {
-        assert_eq!(vec!["p", "q"].into_string_vec(), vec!["p", "q"]);
-    }
-
-    #[test]
-    fn into_string_vec_from_vec_string() {
-        let v = vec!["one".to_string(), "two".to_string()];
-        assert_eq!(v.into_string_vec(), vec!["one", "two"]);
-    }
-
-    // ── Payload serialization ────────────────────────────────────────────────
 
     #[test]
     fn embed_input_serialization_minimal() {
@@ -1095,40 +854,14 @@ mod tests {
         assert_eq!(json["truncation"], false);
     }
 
-    // ── EmbedBuilder ─────────────────────────────────────────────────────────
-
     #[test]
     fn embed_builder_defaults() {
         let client = Client::with_api_key("key12345").unwrap();
-        let builder = client.embed("text");
+        let builder = client.embed(vec!["text"]);
         assert_eq!(builder.model, model::VOYAGE);
         assert!(builder.input_type.is_none());
         assert!(builder.truncation.is_none());
         assert!(builder.output_dimension.is_none());
-    }
-
-    #[test]
-    fn embed_builder_accepts_str() {
-        let client = Client::with_api_key("key12345").unwrap();
-        let builder = client.embed("single");
-        assert_eq!(builder.input, vec!["single"]);
-    }
-
-    #[test]
-    fn embed_builder_accepts_vec_str() {
-        let client = Client::with_api_key("key12345").unwrap();
-        let builder = client.embed(vec!["a", "b"]);
-        assert_eq!(builder.input, vec!["a", "b"]);
-    }
-
-    #[test]
-    fn embed_builder_accepts_slice_without_move() {
-        let client = Client::with_api_key("key12345").unwrap();
-        let docs = vec!["x", "y"];
-        let builder = client.embed(&docs);
-        assert_eq!(builder.input, vec!["x", "y"]);
-        // docs is still accessible
-        assert_eq!(docs[0], "x");
     }
 
     #[test]
@@ -1146,8 +879,6 @@ mod tests {
         assert_eq!(builder.output_dimension, Some(256));
     }
 
-    // ── RerankBuilder ────────────────────────────────────────────────────────
-
     #[test]
     fn rerank_builder_defaults() {
         let client = Client::with_api_key("key12345").unwrap();
@@ -1155,30 +886,6 @@ mod tests {
         assert_eq!(builder.model, model::RERANK);
         assert!(builder.top_k.is_none());
         assert!(builder.truncation.is_none());
-    }
-
-    #[test]
-    fn rerank_builder_accepts_str() {
-        let client = Client::with_api_key("key12345").unwrap();
-        let builder = client.rerank("q", "single doc");
-        assert_eq!(builder.documents, vec!["single doc"]);
-    }
-
-    #[test]
-    fn rerank_builder_accepts_vec_str() {
-        let client = Client::with_api_key("key12345").unwrap();
-        let builder = client.rerank("q", vec!["a", "b"]);
-        assert_eq!(builder.documents, vec!["a", "b"]);
-    }
-
-    #[test]
-    fn rerank_builder_accepts_slice_without_move() {
-        let client = Client::with_api_key("key12345").unwrap();
-        let docs = vec!["p", "q"];
-        let builder = client.rerank("query", &docs);
-        assert_eq!(builder.documents, vec!["p", "q"]);
-        // docs is still accessible
-        assert_eq!(docs[0], "p");
     }
 
     #[test]
