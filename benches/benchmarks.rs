@@ -1,5 +1,5 @@
 use criterion::{BenchmarkId, Criterion, black_box, criterion_group, criterion_main};
-use mongodb_voyageai::{Client, Config, Embed, Rerank, Reranking, Usage, client, model};
+use mongodb_voyageai::{Client, Config, Embed, Rerank, Reranking, Usage, client, model, OutputDtype};
 
 // ---------------------------------------------------------------------------
 // JSON fixtures
@@ -127,6 +127,7 @@ fn bench_embed_input_serialize(c: &mut Criterion) {
         input_type: None,
         truncation: None,
         output_dimension: None,
+        output_dtype: None,
     };
     group.bench_function("minimal", |b| {
         b.iter(|| serde_json::to_string(black_box(&minimal)).unwrap());
@@ -138,9 +139,22 @@ fn bench_embed_input_serialize(c: &mut Criterion) {
         input_type: Some("document".into()),
         truncation: Some(true),
         output_dimension: Some(512),
+        output_dtype: None,
     };
     group.bench_function("full_params", |b| {
         b.iter(|| serde_json::to_string(black_box(&full)).unwrap());
+    });
+
+    let with_quantization = client::EmbedInput {
+        input: vec!["hello world".into()],
+        model: model::VOYAGE_3_LARGE.into(),
+        input_type: Some("document".into()),
+        truncation: Some(true),
+        output_dimension: Some(512),
+        output_dtype: Some(OutputDtype::Int8),
+    };
+    group.bench_function("with_int8_quantization", |b| {
+        b.iter(|| serde_json::to_string(black_box(&with_quantization)).unwrap());
     });
 
     let large_batch: Vec<String> = (0..100).map(|i| format!("Document number {i}")).collect();
@@ -150,6 +164,7 @@ fn bench_embed_input_serialize(c: &mut Criterion) {
         input_type: Some("document".into()),
         truncation: None,
         output_dimension: None,
+        output_dtype: None,
     };
     group.bench_function("100_inputs", |b| {
         b.iter(|| serde_json::to_string(black_box(&batch)).unwrap());
@@ -293,6 +308,183 @@ fn bench_client_rerank_roundtrip(c: &mut Criterion) {
 }
 
 // ---------------------------------------------------------------------------
+// Quantization benchmarks
+// ---------------------------------------------------------------------------
+
+fn bench_output_dtype_serialize(c: &mut Criterion) {
+    let mut group = c.benchmark_group("output_dtype_serialize");
+
+    group.bench_function("float", |b| {
+        b.iter(|| serde_json::to_string(black_box(&OutputDtype::Float)).unwrap());
+    });
+
+    group.bench_function("int8", |b| {
+        b.iter(|| serde_json::to_string(black_box(&OutputDtype::Int8)).unwrap());
+    });
+
+    group.bench_function("uint8", |b| {
+        b.iter(|| serde_json::to_string(black_box(&OutputDtype::Uint8)).unwrap());
+    });
+
+    group.bench_function("binary", |b| {
+        b.iter(|| serde_json::to_string(black_box(&OutputDtype::Binary)).unwrap());
+    });
+
+    group.bench_function("ubinary", |b| {
+        b.iter(|| serde_json::to_string(black_box(&OutputDtype::Ubinary)).unwrap());
+    });
+
+    group.finish();
+}
+
+fn bench_quantization_storage_calculation(c: &mut Criterion) {
+    let mut group = c.benchmark_group("quantization_storage_calc");
+
+    // Simulate calculating storage requirements for different quantization types
+    fn calculate_storage(dtype: OutputDtype, dimensions: usize) -> usize {
+        let bytes_per_dim = match dtype {
+            OutputDtype::Float => 4,
+            OutputDtype::Int8 | OutputDtype::Uint8 => 1,
+            OutputDtype::Binary | OutputDtype::Ubinary => 1, // Will be divided by 8
+        };
+        let total = dimensions * bytes_per_dim;
+        match dtype {
+            OutputDtype::Binary | OutputDtype::Ubinary => total / 8,
+            _ => total,
+        }
+    }
+
+    let dimensions = 512;
+
+    group.bench_function("float_512d", |b| {
+        b.iter(|| calculate_storage(black_box(OutputDtype::Float), black_box(dimensions)));
+    });
+
+    group.bench_function("int8_512d", |b| {
+        b.iter(|| calculate_storage(black_box(OutputDtype::Int8), black_box(dimensions)));
+    });
+
+    group.bench_function("binary_512d", |b| {
+        b.iter(|| calculate_storage(black_box(OutputDtype::Binary), black_box(dimensions)));
+    });
+
+    group.finish();
+}
+
+fn bench_quantization_embed_builder(c: &mut Criterion) {
+    let mut group = c.benchmark_group("quantization_embed_builder");
+
+    let config = Config {
+        api_key: Some("bench-key".into()),
+        ..Config::default()
+    };
+    let client = Client::new(&config).unwrap();
+
+    group.bench_function("builder_no_quantization", |b| {
+        b.iter(|| {
+            let builder = client
+                .embed(black_box("test text"))
+                .model(model::VOYAGE_3_LARGE)
+                .output_dimension(512);
+            black_box(builder);
+        });
+    });
+
+    group.bench_function("builder_with_int8", |b| {
+        b.iter(|| {
+            let builder = client
+                .embed(black_box("test text"))
+                .model(model::VOYAGE_3_LARGE)
+                .output_dimension(512)
+                .output_dtype(OutputDtype::Int8);
+            black_box(builder);
+        });
+    });
+
+    group.bench_function("builder_with_binary", |b| {
+        b.iter(|| {
+            let builder = client
+                .embed(black_box("test text"))
+                .model(model::VOYAGE_3_LARGE)
+                .output_dimension(512)
+                .output_dtype(OutputDtype::Binary);
+            black_box(builder);
+        });
+    });
+
+    group.finish();
+}
+
+fn bench_quantization_comparison(c: &mut Criterion) {
+    let mut group = c.benchmark_group("quantization_comparison");
+
+    // Benchmark different quantization types in a realistic scenario
+    for dtype in [
+        OutputDtype::Float,
+        OutputDtype::Int8,
+        OutputDtype::Uint8,
+        OutputDtype::Binary,
+        OutputDtype::Ubinary,
+    ] {
+        let dtype_name = format!("{:?}", dtype).to_lowercase();
+        
+        group.bench_with_input(
+            BenchmarkId::new("serialize_embed_input", &dtype_name),
+            &dtype,
+            |b, &dtype| {
+                let input = client::EmbedInput {
+                    input: vec!["benchmark text".into()],
+                    model: model::VOYAGE_3_LARGE.into(),
+                    input_type: Some("document".into()),
+                    truncation: Some(true),
+                    output_dimension: Some(512),
+                    output_dtype: Some(dtype),
+                };
+                b.iter(|| serde_json::to_string(black_box(&input)).unwrap());
+            },
+        );
+    }
+
+    group.finish();
+}
+
+fn bench_quantization_hashmap_lookup(c: &mut Criterion) {
+    use std::collections::HashMap;
+
+    let mut group = c.benchmark_group("quantization_hashmap");
+
+    // Create a map of quantization types to their compression ratios
+    let mut compression_map = HashMap::new();
+    compression_map.insert(OutputDtype::Float, 1);
+    compression_map.insert(OutputDtype::Int8, 4);
+    compression_map.insert(OutputDtype::Uint8, 4);
+    compression_map.insert(OutputDtype::Binary, 32);
+    compression_map.insert(OutputDtype::Ubinary, 32);
+
+    group.bench_function("lookup_int8", |b| {
+        b.iter(|| {
+            black_box(compression_map.get(black_box(&OutputDtype::Int8)));
+        });
+    });
+
+    group.bench_function("lookup_binary", |b| {
+        b.iter(|| {
+            black_box(compression_map.get(black_box(&OutputDtype::Binary)));
+        });
+    });
+
+    group.bench_function("insert_and_lookup", |b| {
+        b.iter(|| {
+            let mut map = HashMap::new();
+            map.insert(OutputDtype::Int8, 4);
+            black_box(map.get(&OutputDtype::Int8));
+        });
+    });
+
+    group.finish();
+}
+
+// ---------------------------------------------------------------------------
 // Criterion groups
 // ---------------------------------------------------------------------------
 
@@ -318,4 +510,13 @@ criterion_group!(
     bench_client_rerank_roundtrip,
 );
 
-criterion_main!(parsing, serialization, client);
+criterion_group!(
+    quantization,
+    bench_output_dtype_serialize,
+    bench_quantization_storage_calculation,
+    bench_quantization_embed_builder,
+    bench_quantization_comparison,
+    bench_quantization_hashmap_lookup,
+);
+
+criterion_main!(parsing, serialization, client, quantization);
