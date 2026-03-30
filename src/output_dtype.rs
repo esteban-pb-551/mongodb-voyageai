@@ -40,7 +40,7 @@ use serde::Serialize;
 /// - `voyage-3-large`
 /// - `voyage-4` series
 /// - Check the [Voyage AI docs](https://docs.voyageai.com) for the latest list
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum OutputDtype {
     /// Full precision floating-point (default).
