@@ -321,6 +321,30 @@ Demonstrates storage optimization using different quantization types (float, int
 cargo run --example quantization
 ```
 
+### Compare Quantization
+
+Compares embedding quality across different quantization types to help choose the right trade-off.
+
+```bash
+cargo run --example compare-quantization
+```
+
+### RAG with Quantization
+
+Production-ready RAG pipeline using int8 quantization for 4× storage reduction.
+
+```bash
+cargo run --example rag-with-quantization
+```
+
+### Asymmetric Retrieval
+
+Demonstrates cost optimization by using different models for documents (voyage-4-large) vs queries (voyage-4-lite).
+
+```bash
+cargo run --example asymmetric-retrieval
+```
+
 ## Documentation
 
 Full API docs are generated with rustdoc. Every public item is documented with examples:
