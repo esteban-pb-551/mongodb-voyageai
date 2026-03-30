@@ -78,13 +78,59 @@ async fn main() -> Result<(), mongodb_voyageai::Error> {
 
 ### Embed Parameters
 
-| Parameter          | Type            | Default              | Description                            |
-|--------------------|-----------------|----------------------|----------------------------------------|
-| `embed`            | `Vec<String>`   | *required*           | Texts to embed                         |
-| `model`            | `Option<model>` | `VOYAGE_4`           | Model identifier                       |
-| `input_type`       | `Option<&str>`  | `None`               | `"query"` or `"document"`              |
-| `truncation`       | `Option<bool>`  | `None`               | Truncate inputs exceeding context       |
-| `output_dimension` | `Option<u32>`   | `None`               | Reduce embedding dimensionality         |
+| Parameter          | Type              | Default              | Description                            |
+|--------------------|-------------------|----------------------|----------------------------------------|
+| `embed`            | `Vec<String>`     | *required*           | Texts to embed                         |
+| `model`            | `Option<model>`   | `VOYAGE_4`           | Model identifier                       |
+| `input_type`       | `Option<&str>`    | `None`               | `"query"` or `"document"`              |
+| `truncation`       | `Option<bool>`    | `None`               | Truncate inputs exceeding context       |
+| `output_dimension` | `Option<u32>`     | `None`               | Reduce embedding dimensionality         |
+| `output_dtype`     | `Option<OutputDtype>` | `None` (float)   | Quantization type (int8, uint8, binary, ubinary) |
+
+### Quantization (Storage Optimization)
+
+Voyage AI models with Quantization-Aware Training support multiple output formats that dramatically reduce storage costs:
+
+```rust
+use mongodb_voyageai::{Client, Config, model, OutputDtype};
+
+#[tokio::main]
+async fn main() -> Result<(), mongodb_voyageai::Error> {
+    let client = Client::new(&Config::new())?;
+
+    // 4× storage reduction with minimal quality loss
+    let embed = client
+        .embed(&["Efficient storage"])
+        .model(model::VOYAGE_3_LARGE)
+        .output_dimension(512)
+        .output_dtype(OutputDtype::Int8)
+        .send()
+        .await?;
+
+    // 32× compression for maximum efficiency
+    let embed_binary = client
+        .embed(&["Ultra compact"])
+        .model(model::VOYAGE_4_LARGE)
+        .output_dimension(512)
+        .output_dtype(OutputDtype::Binary)
+        .send()
+        .await?;
+
+    Ok(())
+}
+```
+
+#### Storage Comparison (512 dimensions)
+
+| Type     | Bytes | Compression | Use Case                          |
+|----------|-------|-------------|-----------------------------------|
+| `Float`  | 2048  | 1×          | Maximum precision required        |
+| `Int8`   | 512   | 4×          | Production (minimal quality loss) |
+| `Uint8`  | 512   | 4×          | Production (minimal quality loss) |
+| `Binary` | 64    | 32×         | Large-scale (storage critical)    |
+| `Ubinary`| 64    | 32×         | Large-scale (storage critical)    |
+
+According to Voyage AI benchmarks, `voyage-3-large` with `int8` at 512 dimensions outperforms OpenAI-v3-large by 8.56% while using only 1/24 the storage.
 
 ### Reranking
 
@@ -265,6 +311,14 @@ Zero-shot topic classification using cosine similarity between text embeddings a
 
 ```bash
 cargo run --example classify-topics
+```
+
+### Quantization
+
+Demonstrates storage optimization using different quantization types (float, int8, uint8, binary, ubinary).
+
+```bash
+cargo run --example quantization
 ```
 
 ## Documentation

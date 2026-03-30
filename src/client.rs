@@ -6,6 +6,7 @@ use serde::Serialize;
 use crate::config::Config;
 use crate::embed::Embed;
 use crate::model;
+use crate::output_dtype::OutputDtype;
 use crate::rerank::Rerank;
 
 /// Errors that can occur when using the VoyageAI [`Client`].
@@ -161,6 +162,7 @@ impl<S: AsRef<str>> IntoStringVec for Vec<S> {
 ///
 /// ```rust
 /// use mongodb_voyageai::client::EmbedInput;
+/// use mongodb_voyageai::OutputDtype;
 ///
 /// let input = EmbedInput {
 ///     input: vec!["hello".into()],
@@ -168,6 +170,7 @@ impl<S: AsRef<str>> IntoStringVec for Vec<S> {
 ///     input_type: Some("query".into()),
 ///     truncation: None,
 ///     output_dimension: None,
+///     output_dtype: None,
 /// };
 ///
 /// let json = serde_json::to_value(&input).unwrap();
@@ -175,6 +178,18 @@ impl<S: AsRef<str>> IntoStringVec for Vec<S> {
 /// assert_eq!(json["input_type"], "query");
 /// // None fields are omitted
 /// assert!(json.get("truncation").is_none());
+///
+/// // With quantization
+/// let input_quantized = EmbedInput {
+///     input: vec!["hello".into()],
+///     model: "voyage-3-large".into(),
+///     input_type: None,
+///     truncation: None,
+///     output_dimension: Some(512),
+///     output_dtype: Some(OutputDtype::Int8),
+/// };
+/// let json = serde_json::to_value(&input_quantized).unwrap();
+/// assert_eq!(json["output_dtype"], "int8");
 /// ```
 #[derive(Debug, Clone, Serialize)]
 pub struct EmbedInput {
@@ -191,6 +206,9 @@ pub struct EmbedInput {
     /// Reduce the embedding to this many dimensions.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub output_dimension: Option<u32>,
+    /// Output data type for quantization (float, int8, uint8, binary, ubinary).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub output_dtype: Option<OutputDtype>,
 }
 
 /// The JSON payload sent to the `/rerank` endpoint.
@@ -496,7 +514,7 @@ impl Client {
 /// # Examples
 ///
 /// ```rust,no_run
-/// # use mongodb_voyageai::{Client, model};
+/// # use mongodb_voyageai::{Client, model, OutputDtype};
 /// # #[tokio::main]
 /// # async fn main() -> Result<(), mongodb_voyageai::Error> {
 /// let client = Client::with_api_key("pa-...")?;
@@ -512,6 +530,7 @@ impl Client {
 ///     .input_type("document")
 ///     .truncation(true)
 ///     .output_dimension(512)
+///     .output_dtype(OutputDtype::Int8)
 ///     .send()
 ///     .await?;
 /// // docs is still accessible here
@@ -525,6 +544,7 @@ pub struct EmbedBuilder<'a> {
     input_type: Option<&'a str>,
     truncation: Option<bool>,
     output_dimension: Option<u32>,
+    output_dtype: Option<OutputDtype>,
 }
 
 impl<'a> EmbedBuilder<'a> {
@@ -536,6 +556,7 @@ impl<'a> EmbedBuilder<'a> {
             input_type: None,
             truncation: None,
             output_dimension: None,
+            output_dtype: None,
         }
     }
 
@@ -650,6 +671,51 @@ impl<'a> EmbedBuilder<'a> {
         self
     }
 
+    /// Sets the output data type for quantization.
+    ///
+    /// Quantization dramatically reduces storage costs while maintaining
+    /// quality. Only supported by models with Quantization-Aware Training
+    /// (voyage-3-large, voyage-4 series).
+    ///
+    /// # Storage Savings
+    ///
+    /// For a 512-dimensional embedding:
+    /// - `Float` (default): 2048 bytes
+    /// - `Int8` / `Uint8`: 512 bytes (4× compression)
+    /// - `Binary` / `Ubinary`: 64 bytes (32× compression)
+    ///
+    /// # Examples
+    ///
+    /// ```rust,no_run
+    /// # use mongodb_voyageai::{Client, model, OutputDtype};
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), mongodb_voyageai::Error> {
+    /// # let client = Client::with_api_key("pa-...")?;
+    /// // 4× storage reduction with minimal quality loss
+    /// let embed = client
+    ///     .embed("efficient storage")
+    ///     .model(model::VOYAGE_3_LARGE)
+    ///     .output_dimension(512)
+    ///     .output_dtype(OutputDtype::Int8)
+    ///     .send()
+    ///     .await?;
+    ///
+    /// // 32× compression for maximum efficiency
+    /// let embed_binary = client
+    ///     .embed("ultra compact")
+    ///     .model(model::VOYAGE_4_LARGE)
+    ///     .output_dimension(512)
+    ///     .output_dtype(OutputDtype::Binary)
+    ///     .send()
+    ///     .await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn output_dtype(mut self, dtype: OutputDtype) -> Self {
+        self.output_dtype = Some(dtype);
+        self
+    }
+
     /// Sends the embedding request and returns the result.
     ///
     /// # Errors
@@ -677,6 +743,7 @@ impl<'a> EmbedBuilder<'a> {
             input_type: self.input_type.map(|s| s.to_string()),
             truncation: self.truncation,
             output_dimension: self.output_dimension,
+            output_dtype: self.output_dtype,
         };
 
         let url = format!("{}/{}/embeddings", self.client.host, self.client.version);
@@ -1044,12 +1111,14 @@ mod tests {
             input_type: None,
             truncation: None,
             output_dimension: None,
+            output_dtype: None,
         };
         let json = serde_json::to_value(&input).unwrap();
         assert_eq!(json["model"], "voyage-4");
         assert!(json.get("input_type").is_none());
         assert!(json.get("truncation").is_none());
         assert!(json.get("output_dimension").is_none());
+        assert!(json.get("output_dtype").is_none());
     }
 
     #[test]
@@ -1060,11 +1129,13 @@ mod tests {
             input_type: Some("document".into()),
             truncation: Some(true),
             output_dimension: Some(256),
+            output_dtype: Some(OutputDtype::Int8),
         };
         let json = serde_json::to_value(&input).unwrap();
         assert_eq!(json["input_type"], "document");
         assert_eq!(json["truncation"], true);
         assert_eq!(json["output_dimension"], 256);
+        assert_eq!(json["output_dtype"], "int8");
     }
 
     #[test]
@@ -1105,6 +1176,7 @@ mod tests {
         assert!(builder.input_type.is_none());
         assert!(builder.truncation.is_none());
         assert!(builder.output_dimension.is_none());
+        assert!(builder.output_dtype.is_none());
     }
 
     #[test]
@@ -1139,11 +1211,13 @@ mod tests {
             .model(model::VOYAGE_3_LARGE)
             .input_type("document")
             .truncation(true)
-            .output_dimension(256);
+            .output_dimension(256)
+            .output_dtype(OutputDtype::Int8);
         assert_eq!(builder.model, model::VOYAGE_3_LARGE);
         assert_eq!(builder.input_type, Some("document"));
         assert_eq!(builder.truncation, Some(true));
         assert_eq!(builder.output_dimension, Some(256));
+        assert_eq!(builder.output_dtype, Some(OutputDtype::Int8));
     }
 
     // ── RerankBuilder ────────────────────────────────────────────────────────

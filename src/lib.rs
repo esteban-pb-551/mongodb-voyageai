@@ -27,7 +27,7 @@
 //! ## Embeddings
 //!
 //! ```rust,no_run
-//! # use mongodb_voyageai::{Client, Config, model};
+//! # use mongodb_voyageai::{Client, Config, model, OutputDtype};
 //! # #[tokio::main]
 //! # async fn main() -> Result<(), mongodb_voyageai::Error> {
 //! let config = Config::new();
@@ -48,7 +48,16 @@
 //!     .send()
 //!     .await?;
 //!
-//! assert_eq!(embed.embeddings.len(), 2);
+//! // With quantization for 4× storage reduction
+//! let embed = client
+//!     .embed(vec!["efficient storage"])
+//!     .model(model::VOYAGE_3_LARGE)
+//!     .output_dimension(512)
+//!     .output_dtype(OutputDtype::Int8)
+//!     .send()
+//!     .await?;
+//!
+//! assert_eq!(embed.embeddings.len(), 1);
 //! # Ok(())
 //! # }
 //! ```
@@ -109,6 +118,7 @@ pub mod client;
 pub mod config;
 pub mod embed;
 pub mod model;
+pub mod output_dtype;
 pub mod rerank;
 pub mod reranking;
 pub mod usage;
@@ -116,6 +126,7 @@ pub mod usage;
 pub use client::{Client, Error};
 pub use config::Config;
 pub use embed::Embed;
+pub use output_dtype::OutputDtype;
 pub use rerank::Rerank;
 pub use reranking::Reranking;
 pub use usage::Usage;
