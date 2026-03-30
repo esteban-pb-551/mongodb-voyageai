@@ -25,12 +25,10 @@
 //! - Quality: Minimal degradation (<2% on most benchmarks)
 
 use mongodb_voyageai::{Client, Config, model, OutputDtype};
-use std::collections::HashMap;
 
 /// A document in our knowledge base with its quantized embedding.
 #[derive(Clone)]
 struct Document {
-    id: usize,
     title: String,
     content: String,
     embedding: Vec<f64>, // In production, this would be Vec<i8>
@@ -162,13 +160,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Build the vector store
     let mut store = VectorStore::new();
-    for (i, ((title, content), embedding)) in knowledge_base
+    for ((title, content), embedding) in knowledge_base
         .iter()
         .zip(&embed_result.embeddings)
-        .enumerate()
     {
         store.add(Document {
-            id: i,
             title: title.to_string(),
             content: content.to_string(),
             embedding: embedding.clone(),

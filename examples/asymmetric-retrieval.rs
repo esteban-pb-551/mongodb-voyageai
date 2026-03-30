@@ -29,9 +29,7 @@ use mongodb_voyageai::{Client, Config, model, OutputDtype};
 
 /// Document with embedding from the large model.
 struct Document {
-    id: usize,
     title: String,
-    content: String,
     embedding: Vec<f64>,
 }
 
@@ -114,11 +112,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let documents: Vec<Document> = knowledge_base
         .iter()
         .zip(&doc_embeddings.embeddings)
-        .enumerate()
-        .map(|(i, ((title, content), emb))| Document {
-            id: i,
+        .map(|((title, _content), emb)| Document {
             title: title.to_string(),
-            content: content.to_string(),
             embedding: emb.clone(),
         })
         .collect();

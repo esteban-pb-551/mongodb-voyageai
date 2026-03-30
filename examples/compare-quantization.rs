@@ -96,9 +96,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     compare_embeddings("Float", &float_result, "Ubinary", &ubinary_result);
 
     // ── Summary ──────────────────────────────────────────────────────────────
-    println!("\n" + "=".repeat(60).as_str());
+    println!("\n{}", "=".repeat(60));
     println!("📊 SUMMARY & RECOMMENDATIONS");
-    println!("=".repeat(60));
+    println!("{}", "=".repeat(60));
     println!();
     println!("Storage for 1M vectors (512 dims):");
     println!("  • Float:   1.95 GB  (baseline)");
@@ -122,7 +122,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 /// Prints embedding information for a given result.
 fn print_embedding_info(
-    dtype_name: &str,
+    _dtype_name: &str,
     result: &mongodb_voyageai::Embed,
     bytes_per_element: usize,
 ) {
@@ -148,7 +148,7 @@ fn print_embedding_info(
 fn compare_embeddings(
     name1: &str,
     result1: &mongodb_voyageai::Embed,
-    name2: &str,
+    _name2: &str,
     result2: &mongodb_voyageai::Embed,
 ) {
     let emb1 = result1.embedding(0).unwrap();
