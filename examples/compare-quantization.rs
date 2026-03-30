@@ -30,7 +30,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("1️⃣  FLOAT (Baseline - Full Precision)");
     let float_result = client
         .embed(&texts)
-        .model(model::VOYAGE_3_LARGE)
+        .model(model::VOYAGE_4_LARGE)
         .input_type("document")
         .output_dimension(512)
         // No output_dtype = defaults to Float
@@ -43,7 +43,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("\n2️⃣  INT8 (Signed 8-bit Integer)");
     let int8_result = client
         .embed(&texts)
-        .model(model::VOYAGE_3_LARGE)
+        .model(model::VOYAGE_4_LARGE)
         .input_type("document")
         .output_dimension(512)
         .output_dtype(OutputDtype::Int8)
@@ -57,7 +57,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("\n3️⃣  UINT8 (Unsigned 8-bit Integer)");
     let uint8_result = client
         .embed(&texts)
-        .model(model::VOYAGE_3_LARGE)
+        .model(model::VOYAGE_4_LARGE)
         .input_type("document")
         .output_dimension(512)
         .output_dtype(OutputDtype::Uint8)
@@ -71,7 +71,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("\n4️⃣  BINARY (1-bit Signed)");
     let binary_result = client
         .embed(&texts)
-        .model(model::VOYAGE_3_LARGE)
+        .model(model::VOYAGE_4_LARGE)
         .input_type("document")
         .output_dimension(512)
         .output_dtype(OutputDtype::Binary)
@@ -85,7 +85,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("\n5️⃣  UBINARY (1-bit Unsigned)");
     let ubinary_result = client
         .embed(&texts)
-        .model(model::VOYAGE_3_LARGE)
+        .model(model::VOYAGE_4_LARGE)
         .input_type("document")
         .output_dimension(512)
         .output_dtype(OutputDtype::Ubinary)

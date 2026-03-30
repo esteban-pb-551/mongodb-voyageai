@@ -142,7 +142,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Embed all documents with int8 quantization and 512 dimensions
     let embed_result = client
         .embed(&contents)
-        .model(model::VOYAGE_3_LARGE)
+        .model(model::VOYAGE_4_LARGE)
         .input_type("document")
         .output_dimension(512)
         .output_dtype(OutputDtype::Int8) // ← 4× storage reduction
@@ -184,7 +184,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         // Embed the query with the same settings as documents
         let query_embed = client
             .embed(*query)
-            .model(model::VOYAGE_3_LARGE)
+            .model(model::VOYAGE_4_LARGE)
             .input_type("query")
             .output_dimension(512)
             .output_dtype(OutputDtype::Int8) // ← Must match document settings

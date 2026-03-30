@@ -47,7 +47,7 @@ async fn embed_with_all_params() {
             "input": ["Test input"],
             "model": "voyage-4",
             "input_type": "document",
-            "truncation": true,
+            "truncation": false,
             "output_dimension": 512
         })))
         .with_status(200)
@@ -68,7 +68,7 @@ async fn embed_with_all_params() {
         .embed("Test input")
         .model(model::VOYAGE)
         .input_type("document")
-        .truncation(true)
+        .truncation(false)
         .output_dimension(512)
         .send()
         .await

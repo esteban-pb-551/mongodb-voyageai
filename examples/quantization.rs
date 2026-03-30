@@ -44,7 +44,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("1. Float (full precision)");
     let float_embed = client
         .embed(&texts)
-        .model(model::VOYAGE_3_LARGE)
+        .model(model::VOYAGE_4_LARGE)
         .output_dimension(512)
         .send()
         .await?;
@@ -60,7 +60,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("2. Int8 (4× compression)");
     let int8_embed = client
         .embed(&texts)
-        .model(model::VOYAGE_3_LARGE)
+        .model(model::VOYAGE_4_LARGE)
         .output_dimension(512)
         .output_dtype(OutputDtype::Int8)
         .send()
@@ -78,7 +78,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("3. Uint8 (4× compression)");
     let uint8_embed = client
         .embed(&texts)
-        .model(model::VOYAGE_3_LARGE)
+        .model(model::VOYAGE_4_LARGE)
         .output_dimension(512)
         .output_dtype(OutputDtype::Uint8)
         .send()
@@ -96,7 +96,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("4. Binary (32× compression)");
     let binary_embed = client
         .embed(&texts)
-        .model(model::VOYAGE_3_LARGE)
+        .model(model::VOYAGE_4_LARGE)
         .output_dimension(512)
         .output_dtype(OutputDtype::Binary)
         .send()
@@ -114,7 +114,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("5. Ubinary (32× compression)");
     let ubinary_embed = client
         .embed(&texts)
-        .model(model::VOYAGE_3_LARGE)
+        .model(model::VOYAGE_4_LARGE)
         .output_dimension(512)
         .output_dtype(OutputDtype::Ubinary)
         .send()
