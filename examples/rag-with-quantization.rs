@@ -187,7 +187,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         // Embed the query with the same settings as documents
         let query_embed = client
-            .embed(query)
+            .embed(*query)
             .model(model::VOYAGE_3_LARGE)
             .input_type("query")
             .output_dimension(512)
@@ -216,7 +216,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             candidates.iter().map(|d| d.content.as_str()).collect();
 
         let rerank_result = client
-            .rerank(query, &candidate_contents)
+            .rerank(*query, &candidate_contents)
             .model(model::RERANK_2_5)
             .top_k(1)
             .send()

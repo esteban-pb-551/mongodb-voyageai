@@ -140,7 +140,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         // Use voyage-4-lite for speed (per-request cost)
         let query_embedding = client
-            .embed(query)
+            .embed(*query)
             .model(model::VOYAGE_4_LITE)
             .input_type("query")
             .output_dimension(512)
