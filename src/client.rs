@@ -213,6 +213,23 @@ pub struct EmbedInput {
 
 /// The JSON payload sent to the `/rerank` endpoint.
 ///
+/// # Limits
+///
+/// - Maximum documents: 1,000
+/// - Query token limits:
+///   - rerank-2.5/2.5-lite: 8,000 tokens
+///   - rerank-2: 4,000 tokens
+///   - rerank-2-lite/rerank-1: 2,000 tokens
+///   - rerank-lite-1: 1,000 tokens
+/// - Query + Document token limits:
+///   - rerank-2.5/2.5-lite: 32,000 tokens
+///   - rerank-2: 16,000 tokens
+///   - rerank-2-lite/rerank-1: 8,000 tokens
+///   - rerank-lite-1: 4,000 tokens
+/// - Total tokens (query tokens × num documents + sum of all document tokens):
+///   - rerank-2.5/2.5-lite/rerank-2/rerank-2-lite: 600K
+///   - rerank-1/rerank-lite-1: 300K
+///
 /// # Examples
 ///
 /// ```rust
@@ -221,9 +238,9 @@ pub struct EmbedInput {
 /// let input = RerankInput {
 ///     query: "search query".into(),
 ///     documents: vec!["doc A".into(), "doc B".into()],
-///     model: "rerank-2".into(),
+///     model: "rerank-2.5".into(),
 ///     top_k: Some(1),
-///     truncation: None,
+///     truncation: None,  // Defaults to true on API side
 /// };
 ///
 /// let json = serde_json::to_value(&input).unwrap();
@@ -242,6 +259,7 @@ pub struct RerankInput {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub top_k: Option<u32>,
     /// Whether to truncate inputs that exceed the model's context length.
+    /// Defaults to true on the API side when not specified.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub truncation: Option<bool>,
 }
@@ -878,7 +896,16 @@ impl<'a> RerankBuilder<'a> {
     /// Enables or disables truncation of inputs that exceed the model's token limit.
     ///
     /// When `true`, long inputs are silently truncated instead of returning an
-    /// error. Defaults to the API's own default when not set.
+    /// error. When `false`, an error will be raised if inputs exceed limits.
+    /// 
+    /// **Defaults to `true`** when not specified (API default).
+    ///
+    /// # Token Limits
+    ///
+    /// - Query: 8,000 tokens (rerank-2.5/2.5-lite), 4,000 (rerank-2), 
+    ///   2,000 (rerank-2-lite/rerank-1), 1,000 (rerank-lite-1)
+    /// - Query + Document: 32,000 tokens (rerank-2.5/2.5-lite), 
+    ///   16,000 (rerank-2), 8,000 (rerank-2-lite/rerank-1), 4,000 (rerank-lite-1)
     ///
     /// # Examples
     ///
@@ -887,9 +914,10 @@ impl<'a> RerankBuilder<'a> {
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), mongodb_voyageai::Error> {
     /// # let client = Client::with_api_key("pa-...")?;
+    /// // Explicitly disable truncation (will error on long inputs)
     /// let rerank = client
     ///     .rerank("query", "a very long document...")
-    ///     .truncation(true)
+    ///     .truncation(false)
     ///     .send()
     ///     .await?;
     /// # Ok(())

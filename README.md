@@ -132,6 +132,10 @@ async fn main() -> Result<(), mongodb_voyageai::Error> {
 
 According to Voyage AI benchmarks, `voyage-3-large` with `int8` at 512 dimensions outperforms OpenAI-v3-large by 8.56% while using only 1/24 the storage.
 
+For detailed performance benchmarks and optimization guidelines, see:
+- [PERFORMANCE.md](PERFORMANCE.md) - Quick performance reference
+- [BENCHMARKS.md](BENCHMARKS.md) - Detailed benchmark results
+
 ### Reranking
 
 ```rust
@@ -179,10 +183,23 @@ async fn main() -> Result<(), mongodb_voyageai::Error> {
 | Parameter       | Type            | Default        | Description                          |
 |-----------------|-----------------|----------------|--------------------------------------|
 | `query`         | `&str`          | *required*     | The search query                     |
-| `documents`     | `Vec<String>`   | *required*     | Documents to rerank                  |
-| `rerank_model`  | `Option<&str>`  | `"rerank-2"`   | Model identifier                     |
+| `documents`     | `Vec<String>`   | *required*     | Documents to rerank (max 1,000)      |
+| `model`         | `Option<&str>`  | `"rerank-2.5"` | Model identifier                     |
 | `top_k`         | `Option<u32>`   | `None`         | Return only the top K results        |
-| `truncation`    | `Option<bool>`  | `None`         | Truncate inputs exceeding context     |
+| `truncation`    | `Option<bool>`  | `true` (API)   | Truncate inputs exceeding context    |
+
+#### Rerank Model Limits
+
+| Model           | Context Length | Query Tokens | Query+Doc Tokens | Total Tokens |
+|-----------------|----------------|--------------|------------------|--------------|
+| rerank-2.5      | 32,000         | 8,000        | 32,000           | 600K         |
+| rerank-2.5-lite | 32,000         | 8,000        | 32,000           | 600K         |
+| rerank-2        | 16,000         | 4,000        | 16,000           | 600K         |
+| rerank-2-lite   | 8,000          | 2,000        | 8,000            | 600K         |
+| rerank-1        | 8,000          | 2,000        | 8,000            | 300K         |
+| rerank-lite-1   | 4,000          | 1,000        | 4,000            | 300K         |
+
+**Note:** Total tokens = (query tokens × num documents) + sum of all document tokens
 
 ## Configuration
 
@@ -251,6 +268,8 @@ Pre-defined model constants are available in the `mongodb_voyageai::model` modul
 | `model::RERANK_2_LITE`           | `rerank-2-lite`         |
 | `model::RERANK_1`                | `rerank-1`              |
 | `model::RERANK_1_LITE`           | `rerank-lite-1`         |
+
+**Recommended:** Use `rerank-2.5` for best quality or `rerank-2.5-lite` for balanced latency/quality. Both support 32K context length and instruction-following.
 
 ## Error Handling
 
@@ -354,6 +373,12 @@ cargo doc --open
 ```
 
 Or browse online at [docs.rs/mongodb-voyageai](https://docs.rs/mongodb-voyageai/latest/mongodb_voyageai/).
+
+### Additional Resources
+
+- [QUANTIZATION_GUIDE.md](QUANTIZATION_GUIDE.md) - Complete guide to using quantization
+- [PERFORMANCE.md](PERFORMANCE.md) - Quick performance reference and optimization tips
+- [BENCHMARKS.md](BENCHMARKS.md) - Detailed benchmark results and analysis
 
 ## License
 
