@@ -138,4 +138,4 @@ This crate has not undergone a formal third-party security audit. If you require
 
 ## Acknowledgements
 
-We appreciate responsible disclosure from security researchers. Contributors who report valid vulnerabilities will be credited in the advisory (unless they prefer to remain anonymous).
+**We appreciate responsible disclosure from security researchers. Contributors who report valid vulnerabilities will be credited in the advisory (unless they prefer to remain anonymous).**
