@@ -12,17 +12,22 @@ keywords = ["voyageai", "embeddings", "rerank", "ai", "nlp"]
 categories = ["api-bindings", "science"]
 
 [dependencies]
-reqwest = { version = "0.13.2", default-features = false, features = ["json", "rustls"] }
+reqwest = { version = "0.13.2", default-features = false, features = ["json", "native-tls"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 thiserror = "2"
-tokio = { version = "1", features = ["full"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "net"] }
 tracing = "0.1"
+
+[dependencies.rustls]
+version = "0.23"
+default-features = false
+features = ["ring"]
 
 [dev-dependencies]
 criterion = { version = "0.5", features = ["async_tokio"] }
 mockito = "1"
-tokio = { version = "1", features = ["full", "test-util"] }
+tokio = { version = "1", features = ["rt", "macros", "test-util"] }
 
 [[bench]]
 name = "benchmarks"
