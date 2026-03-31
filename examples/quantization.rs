@@ -26,11 +26,12 @@
 //! According to Voyage AI benchmarks, voyage-3-large with int8 at 512 dimensions
 //! outperforms OpenAI-v3-large by 8.56% while using only 1/24 the storage.
 
-use mongodb_voyageai::{Client, Config, model, OutputDtype};
+use mongodb_voyageai::{Client, model, OutputDtype};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let client = Client::new(&Config::new())?;
+    // Reads VOYAGEAI_API_KEY from the environment
+    let client = Client::from_env();
 
     let texts = vec![
         "Rust is a systems programming language.",

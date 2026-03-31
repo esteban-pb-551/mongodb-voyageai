@@ -10,11 +10,12 @@
 //! - Binary/Ubinary: Significant compression, 32× reduction → Use for massive scale
 //! - Float: Maximum precision but 4-32× more expensive storage
 
-use mongodb_voyageai::{Client, Config, model, OutputDtype};
+use mongodb_voyageai::{Client, model, OutputDtype};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let client = Client::new(&Config::new())?;
+    // Reads VOYAGEAI_API_KEY from the environment
+    let client = Client::from_env();
 
     // Sample texts for embedding
     let texts = vec![

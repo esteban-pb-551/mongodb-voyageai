@@ -14,7 +14,7 @@
 //! The reranker is slower yet more accurate, so running it only on the
 //! top-K candidates from stage 1 gives the best of both worlds.
 
-use mongodb_voyageai::{Client, Config, model};
+use mongodb_voyageai::{Client, model};
 
 /// A document paired with its pre-computed embedding vector.
 struct Entry {
@@ -36,7 +36,8 @@ fn euclidean_distance(src: &[f64], dst: &[f64]) -> f64 {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let client = Client::new(&Config::new())?;
+    // Reads VOYAGEAI_API_KEY from the environment
+    let client = Client::from_env();
 
     // ── Stage 0: build the document store ────────────────────────────────────
     // In a real application these would come from a database; here we use a

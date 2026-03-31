@@ -24,7 +24,7 @@
 //! - Int8 (512 dims): ~512 MB storage (4× reduction)
 //! - Quality: Minimal degradation (<2% on most benchmarks)
 
-use mongodb_voyageai::{Client, Config, model, OutputDtype};
+use mongodb_voyageai::{Client, model, OutputDtype};
 
 /// A document in our knowledge base with its quantized embedding.
 #[derive(Clone)]
@@ -78,7 +78,11 @@ fn cosine_similarity(a: &[f64], b: &[f64]) -> f64 {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let client = Client::new(&Config::new())?;
+    // Reads VOYAGEAI_API_KEY from the environment
+    let client = Client::try_from_env().unwrap_or_else(|e| {
+        eprintln!("Error: {}", e);
+        std::process::exit(1);
+    });
 
     println!("=== RAG Pipeline with Quantized Embeddings ===\n");
 

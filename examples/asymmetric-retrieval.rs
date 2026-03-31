@@ -25,7 +25,7 @@
 //! - Queries: 10K × 365 × $0.02/1M = $73/year
 //! - Total first year: $193 (65% savings!)
 
-use mongodb_voyageai::{Client, Config, model, OutputDtype};
+use mongodb_voyageai::{Client, model, OutputDtype};
 
 /// Document with embedding from the large model.
 struct Document {
@@ -48,7 +48,8 @@ fn cosine_similarity(a: &[f64], b: &[f64]) -> f64 {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let client = Client::new(&Config::new())?;
+    // Reads VOYAGEAI_API_KEY from the environment
+    let client = Client::from_env();
 
     println!("=== Asymmetric Retrieval with Voyage 4 Series ===\n");
 

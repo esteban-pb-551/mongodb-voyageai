@@ -13,11 +13,12 @@
 //! embedding similarity but significantly more accurate, making it ideal as a
 //! second stage after a fast nearest-neighbour retrieval step.
 
-use mongodb_voyageai::{Client, Config, model};
+use mongodb_voyageai::{Client, model};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let client = Client::new(&Config::new())?;
+    // Reads VOYAGEAI_API_KEY from the environment
+    let client = Client::from_env();
 
     let query = "Who should I call if my pipes are leaking?";
 

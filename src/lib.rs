@@ -6,12 +6,12 @@
 //! ## Quick Start
 //!
 //! ```rust,no_run
-//! use mongodb_voyageai::{Client, Config};
+//! use mongodb_voyageai::Client;
 //!
 //! # #[tokio::main]
 //! # async fn main() -> Result<(), mongodb_voyageai::Error> {
 //! // Reads VOYAGEAI_API_KEY from the environment
-//! let client = Client::new(&Config::new())?;
+//! let client = Client::from_env();
 //!
 //! let embed = client
 //!     .embed(vec!["Hello, world!"])
@@ -27,11 +27,10 @@
 //! ## Embeddings
 //!
 //! ```rust,no_run
-//! # use mongodb_voyageai::{Client, Config, model, OutputDtype};
+//! # use mongodb_voyageai::{Client, model, OutputDtype};
 //! # #[tokio::main]
 //! # async fn main() -> Result<(), mongodb_voyageai::Error> {
-//! let config = Config::new();
-//! let client = Client::new(&config)?;
+//! let client = Client::from_env();
 //!
 //! // Single embedding
 //! let embed = client
@@ -100,7 +99,7 @@
 //! ## Error Handling
 //!
 //! ```rust,no_run
-//! # use mongodb_voyageai::{Client, Config, Error};
+//! # use mongodb_voyageai::{Client, Error};
 //! # #[tokio::main]
 //! # async fn main() {
 //! # let client = Client::with_api_key("pa-...").unwrap();

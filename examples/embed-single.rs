@@ -14,11 +14,12 @@
 //! when embedding search queries and `input_type("document")` when embedding
 //! passages you intend to store and retrieve later.
 
-use mongodb_voyageai::{Client, Config, model};
+use mongodb_voyageai::{Client, model};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let client = Client::new(&Config::new())?;
+    // Reads VOYAGEAI_API_KEY from the environment
+    let client = Client::from_env();
 
     // ── Example 1: single &str, default model ────────────────────────────────
     // `embed` accepts a bare `&str` — no `vec![]` or `.into()` needed.
