@@ -24,7 +24,7 @@
 //! - Int8 (512 dims): ~512 MB storage (4× reduction)
 //! - Quality: Minimal degradation (<2% on most benchmarks)
 
-use mongodb_voyageai::{Client, model, OutputDtype};
+use mongodb_voyageai::{Client, OutputDtype, model};
 
 /// A document in our knowledge base with its quantized embedding.
 #[derive(Clone)]
@@ -155,19 +155,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("   ✓ Embedded {} documents", embed_result.embeddings.len());
     println!("   ✓ Model: {}", embed_result.model);
-    println!("   ✓ Dimensions: {}", embed_result.embedding(0).unwrap().len());
-    println!("   ✓ Tokens used: {}", embed_result.usage.total_tokens);
     println!(
-        "   ✓ Storage per doc: {} bytes (vs 2048 for float)\n",
-        512
+        "   ✓ Dimensions: {}",
+        embed_result.embedding(0).unwrap().len()
     );
+    println!("   ✓ Tokens used: {}", embed_result.usage.total_tokens);
+    println!("   ✓ Storage per doc: {} bytes (vs 2048 for float)\n", 512);
 
     // Build the vector store
     let mut store = VectorStore::new();
-    for ((title, content), embedding) in knowledge_base
-        .iter()
-        .zip(&embed_result.embeddings)
-    {
+    for ((title, content), embedding) in knowledge_base.iter().zip(&embed_result.embeddings) {
         store.add(Document {
             title: title.to_string(),
             content: content.to_string(),
@@ -212,8 +209,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
 
         // Rerank with cross-encoder for higher precision
-        let candidate_contents: Vec<&str> =
-            candidates.iter().map(|d| d.content.as_str()).collect();
+        let candidate_contents: Vec<&str> = candidates.iter().map(|d| d.content.as_str()).collect();
 
         let rerank_result = client
             .rerank(query, &candidate_contents)

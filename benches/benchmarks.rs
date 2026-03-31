@@ -1,5 +1,7 @@
 use criterion::{BenchmarkId, Criterion, black_box, criterion_group, criterion_main};
-use mongodb_voyageai::{Client, Config, Embed, Rerank, Reranking, Usage, client, model, OutputDtype};
+use mongodb_voyageai::{
+    Client, Config, Embed, OutputDtype, Rerank, Reranking, Usage, client, model,
+};
 
 // ---------------------------------------------------------------------------
 // JSON fixtures
@@ -427,7 +429,7 @@ fn bench_quantization_comparison(c: &mut Criterion) {
         OutputDtype::Ubinary,
     ] {
         let dtype_name = format!("{:?}", dtype).to_lowercase();
-        
+
         group.bench_with_input(
             BenchmarkId::new("serialize_embed_input", &dtype_name),
             &dtype,

@@ -6,7 +6,7 @@
 //! ## Quick Start
 //!
 //! ```rust,no_run
-//! use mongodb_voyageai::Client;
+//! use mongodb_voyageai::{Client, model};
 //!
 //! # #[tokio::main]
 //! # async fn main() -> Result<(), mongodb_voyageai::Error> {
@@ -15,6 +15,8 @@
 //!
 //! let embed = client
 //!     .embed(vec!["Hello, world!"])
+//!     .model(model::VOYAGE_4_LITE)
+//!     .input_type("document")
 //!     .send()
 //!     .await?;
 //!

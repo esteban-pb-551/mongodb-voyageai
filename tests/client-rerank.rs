@@ -144,12 +144,7 @@ async fn rerank_failure_500() {
         .await;
 
     let client = Client::new(&mock_config(server.url())).unwrap();
-    match client
-        .rerank("query", "doc")
-        .send()
-        .await
-        .unwrap_err()
-    {
+    match client.rerank("query", "doc").send().await.unwrap_err() {
         Error::RequestError { status, body } => {
             assert_eq!(status, 500);
             assert!(body.contains("unknown error"));

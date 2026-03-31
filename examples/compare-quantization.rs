@@ -10,7 +10,7 @@
 //! - Binary/Ubinary: Significant compression, 32× reduction → Use for massive scale
 //! - Float: Maximum precision but 4-32× more expensive storage
 
-use mongodb_voyageai::{Client, model, OutputDtype};
+use mongodb_voyageai::{Client, OutputDtype, model};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -28,7 +28,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     ];
 
     println!("=== Quantization Quality Comparison ===\n");
-    println!("Embedding {} texts with different quantization types...\n", texts.len());
+    println!(
+        "Embedding {} texts with different quantization types...\n",
+        texts.len()
+    );
 
     // ── 1. Float (baseline) ──────────────────────────────────────────────────
     println!("1️⃣  FLOAT (Baseline - Full Precision)");
@@ -138,14 +141,19 @@ fn print_embedding_info(
     println!("   Dimensions: {}", dims);
     println!("   Vectors:    {}", num_vectors);
     println!("   Storage:    {} bytes/vector", storage_per_vector);
-    println!("   Total:      {} bytes for {} vectors", 
-             storage_per_vector * num_vectors, num_vectors);
+    println!(
+        "   Total:      {} bytes for {} vectors",
+        storage_per_vector * num_vectors,
+        num_vectors
+    );
     println!("   Tokens:     {}", result.usage.total_tokens);
 
     // Show sample values from first embedding
     let first_embedding = result.embedding(0).unwrap();
-    println!("   Sample:     [{:.4}, {:.4}, {:.4}, ...]", 
-             first_embedding[0], first_embedding[1], first_embedding[2]);
+    println!(
+        "   Sample:     [{:.4}, {:.4}, {:.4}, ...]",
+        first_embedding[0], first_embedding[1], first_embedding[2]
+    );
 }
 
 /// Compares two embedding results by computing cosine similarity.
@@ -161,7 +169,7 @@ fn compare_embeddings(
     let similarity = cosine_similarity(emb1, emb2);
 
     println!("   Similarity: {:.4} (vs {})", similarity, name1);
-    
+
     if similarity > 0.99 {
         println!("   Quality:    ✓ Excellent (>99% preserved)");
     } else if similarity > 0.95 {
@@ -178,7 +186,7 @@ fn cosine_similarity(a: &[f64], b: &[f64]) -> f64 {
     let dot: f64 = a.iter().zip(b).map(|(x, y)| x * y).sum();
     let norm_a: f64 = a.iter().map(|x| x * x).sum::<f64>().sqrt();
     let norm_b: f64 = b.iter().map(|x| x * x).sum::<f64>().sqrt();
-    
+
     if norm_a == 0.0 || norm_b == 0.0 {
         0.0
     } else {

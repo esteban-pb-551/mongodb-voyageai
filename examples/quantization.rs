@@ -26,7 +26,7 @@
 //! According to Voyage AI benchmarks, voyage-3-large with int8 at 512 dimensions
 //! outperforms OpenAI-v3-large by 8.56% while using only 1/24 the storage.
 
-use mongodb_voyageai::{Client, model, OutputDtype};
+use mongodb_voyageai::{Client, OutputDtype, model};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -55,7 +55,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("   Tokens: {}", float_embed.usage.total_tokens);
     println!("   Dimensions: {}", float_embed.embedding(0).unwrap().len());
     println!("   Storage: {} bytes per vector", float_size);
-    println!("   Total: {} bytes for {} vectors\n", float_size * texts.len(), texts.len());
+    println!(
+        "   Total: {} bytes for {} vectors\n",
+        float_size * texts.len(),
+        texts.len()
+    );
 
     // ── Int8 (4× compression) ────────────────────────────────────────────────
     println!("2. Int8 (4× compression)");
@@ -72,8 +76,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("   Tokens: {}", int8_embed.usage.total_tokens);
     println!("   Dimensions: {}", int8_embed.embedding(0).unwrap().len());
     println!("   Storage: {} bytes per vector", int8_size);
-    println!("   Total: {} bytes for {} vectors", int8_size * texts.len(), texts.len());
-    println!("   Compression: {:.1}× vs float\n", float_size as f64 / int8_size as f64);
+    println!(
+        "   Total: {} bytes for {} vectors",
+        int8_size * texts.len(),
+        texts.len()
+    );
+    println!(
+        "   Compression: {:.1}× vs float\n",
+        float_size as f64 / int8_size as f64
+    );
 
     // ── Uint8 (4× compression) ───────────────────────────────────────────────
     println!("3. Uint8 (4× compression)");
@@ -90,8 +101,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("   Tokens: {}", uint8_embed.usage.total_tokens);
     println!("   Dimensions: {}", uint8_embed.embedding(0).unwrap().len());
     println!("   Storage: {} bytes per vector", uint8_size);
-    println!("   Total: {} bytes for {} vectors", uint8_size * texts.len(), texts.len());
-    println!("   Compression: {:.1}× vs float\n", float_size as f64 / uint8_size as f64);
+    println!(
+        "   Total: {} bytes for {} vectors",
+        uint8_size * texts.len(),
+        texts.len()
+    );
+    println!(
+        "   Compression: {:.1}× vs float\n",
+        float_size as f64 / uint8_size as f64
+    );
 
     // ── Binary (32× compression) ─────────────────────────────────────────────
     println!("4. Binary (32× compression)");
@@ -106,10 +124,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let binary_size = calculate_storage_bytes(&binary_embed, 1) / 8; // 1 bit per dimension
     println!("   Model: {}", binary_embed.model);
     println!("   Tokens: {}", binary_embed.usage.total_tokens);
-    println!("   Dimensions: {}", binary_embed.embedding(0).unwrap().len());
+    println!(
+        "   Dimensions: {}",
+        binary_embed.embedding(0).unwrap().len()
+    );
     println!("   Storage: {} bytes per vector", binary_size);
-    println!("   Total: {} bytes for {} vectors", binary_size * texts.len(), texts.len());
-    println!("   Compression: {:.1}× vs float\n", float_size as f64 / binary_size as f64);
+    println!(
+        "   Total: {} bytes for {} vectors",
+        binary_size * texts.len(),
+        texts.len()
+    );
+    println!(
+        "   Compression: {:.1}× vs float\n",
+        float_size as f64 / binary_size as f64
+    );
 
     // ── Ubinary (32× compression) ────────────────────────────────────────────
     println!("5. Ubinary (32× compression)");
@@ -124,17 +152,36 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let ubinary_size = calculate_storage_bytes(&ubinary_embed, 1) / 8; // 1 bit per dimension
     println!("   Model: {}", ubinary_embed.model);
     println!("   Tokens: {}", ubinary_embed.usage.total_tokens);
-    println!("   Dimensions: {}", ubinary_embed.embedding(0).unwrap().len());
+    println!(
+        "   Dimensions: {}",
+        ubinary_embed.embedding(0).unwrap().len()
+    );
     println!("   Storage: {} bytes per vector", ubinary_size);
-    println!("   Total: {} bytes for {} vectors", ubinary_size * texts.len(), texts.len());
-    println!("   Compression: {:.1}× vs float\n", float_size as f64 / ubinary_size as f64);
+    println!(
+        "   Total: {} bytes for {} vectors",
+        ubinary_size * texts.len(),
+        texts.len()
+    );
+    println!(
+        "   Compression: {:.1}× vs float\n",
+        float_size as f64 / ubinary_size as f64
+    );
 
     // ── Summary ──────────────────────────────────────────────────────────────
     println!("=== Summary ===");
     println!("For a corpus of 1 million 512-dimensional vectors:");
-    println!("  Float:   {:.2} GB", (float_size * 1_000_000) as f64 / 1_073_741_824.0);
-    println!("  Int8:    {:.2} GB (4× smaller)", (int8_size * 1_000_000) as f64 / 1_073_741_824.0);
-    println!("  Binary:  {:.2} GB (32× smaller)", (binary_size * 1_000_000) as f64 / 1_073_741_824.0);
+    println!(
+        "  Float:   {:.2} GB",
+        (float_size * 1_000_000) as f64 / 1_073_741_824.0
+    );
+    println!(
+        "  Int8:    {:.2} GB (4× smaller)",
+        (int8_size * 1_000_000) as f64 / 1_073_741_824.0
+    );
+    println!(
+        "  Binary:  {:.2} GB (32× smaller)",
+        (binary_size * 1_000_000) as f64 / 1_073_741_824.0
+    );
     println!("\nRecommendation: Use Int8 for production (best quality/cost trade-off)");
 
     Ok(())

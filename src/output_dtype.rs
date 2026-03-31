@@ -400,11 +400,7 @@ mod tests {
 
     #[test]
     fn store_in_vec() {
-        let dtypes = [
-            OutputDtype::Float,
-            OutputDtype::Int8,
-            OutputDtype::Binary,
-        ];
+        let dtypes = [OutputDtype::Float, OutputDtype::Int8, OutputDtype::Binary];
 
         assert_eq!(dtypes.len(), 3);
         assert_eq!(dtypes[0], OutputDtype::Float);
@@ -439,9 +435,18 @@ mod tests {
         }
 
         let dims = 512;
-        assert_eq!(storage_per_dimension(OutputDtype::Float) * dims as f64, 2048.0);
-        assert_eq!(storage_per_dimension(OutputDtype::Int8) * dims as f64, 512.0);
-        assert_eq!(storage_per_dimension(OutputDtype::Binary) * dims as f64, 64.0);
+        assert_eq!(
+            storage_per_dimension(OutputDtype::Float) * dims as f64,
+            2048.0
+        );
+        assert_eq!(
+            storage_per_dimension(OutputDtype::Int8) * dims as f64,
+            512.0
+        );
+        assert_eq!(
+            storage_per_dimension(OutputDtype::Binary) * dims as f64,
+            64.0
+        );
     }
 
     #[test]

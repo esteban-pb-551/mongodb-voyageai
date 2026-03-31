@@ -117,7 +117,6 @@ impl<S: AsRef<str>> IntoStringVec for &[S] {
     }
 }
 
-
 /// Borrows a `Vec<S>` without moving it.
 ///
 /// Delegates to the `&[S]` implementation so that `&vec` and `&slice` behave
@@ -439,8 +438,7 @@ impl Client {
     /// let client = Client::from_env();
     /// ```
     pub fn from_env() -> Self {
-        Self::try_from_env()
-            .expect("Failed to create client: ensure VOYAGEAI_API_KEY is set")
+        Self::try_from_env().expect("Failed to create client: ensure VOYAGEAI_API_KEY is set")
     }
 
     /// Creates an [`EmbedBuilder`] for the given input texts.
@@ -939,14 +937,14 @@ impl<'a> RerankBuilder<'a> {
     ///
     /// When `true`, long inputs are silently truncated instead of returning an
     /// error. When `false`, an error will be raised if inputs exceed limits.
-    /// 
+    ///
     /// **Defaults to `true`** when not specified (API default).
     ///
     /// # Token Limits
     ///
-    /// - Query: 8,000 tokens (rerank-2.5/2.5-lite), 4,000 (rerank-2), 
+    /// - Query: 8,000 tokens (rerank-2.5/2.5-lite), 4,000 (rerank-2),
     ///   2,000 (rerank-2-lite/rerank-1), 1,000 (rerank-lite-1)
-    /// - Query + Document: 32,000 tokens (rerank-2.5/2.5-lite), 
+    /// - Query + Document: 32,000 tokens (rerank-2.5/2.5-lite),
     ///   16,000 (rerank-2), 8,000 (rerank-2-lite/rerank-1), 4,000 (rerank-lite-1)
     ///
     /// # Examples

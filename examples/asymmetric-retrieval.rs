@@ -25,7 +25,7 @@
 //! - Queries: 10K × 365 × $0.02/1M = $73/year
 //! - Total first year: $193 (65% savings!)
 
-use mongodb_voyageai::{Client, model, OutputDtype};
+use mongodb_voyageai::{Client, OutputDtype, model};
 
 /// Document with embedding from the large model.
 struct Document {
@@ -38,7 +38,7 @@ fn cosine_similarity(a: &[f64], b: &[f64]) -> f64 {
     let dot: f64 = a.iter().zip(b).map(|(x, y)| x * y).sum();
     let norm_a: f64 = a.iter().map(|x| x * x).sum::<f64>().sqrt();
     let norm_b: f64 = b.iter().map(|x| x * x).sum::<f64>().sqrt();
-    
+
     if norm_a == 0.0 || norm_b == 0.0 {
         0.0
     } else {
@@ -104,10 +104,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("   ✓ Model: {} (MoE architecture)", doc_embeddings.model);
     println!("   ✓ Documents: {}", doc_embeddings.embeddings.len());
-    println!("   ✓ Dimensions: {}", doc_embeddings.embedding(0).unwrap().len());
+    println!(
+        "   ✓ Dimensions: {}",
+        doc_embeddings.embedding(0).unwrap().len()
+    );
     println!("   ✓ Tokens: {}", doc_embeddings.usage.total_tokens);
-    println!("   ✓ Cost: ~${:.4} (one-time)\n", 
-             doc_embeddings.usage.total_tokens as f64 * 0.12 / 1_000_000.0);
+    println!(
+        "   ✓ Cost: ~${:.4} (one-time)\n",
+        doc_embeddings.usage.total_tokens as f64 * 0.12 / 1_000_000.0
+    );
 
     // Build document store
     let documents: Vec<Document> = knowledge_base
@@ -172,20 +177,29 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Document Indexing (one-time):");
     println!("   • Model: voyage-4-large");
     println!("   • Tokens: {}", doc_embeddings.usage.total_tokens);
-    println!("   • Cost: ~${:.4}", 
-             doc_embeddings.usage.total_tokens as f64 * 0.12 / 1_000_000.0);
+    println!(
+        "   • Cost: ~${:.4}",
+        doc_embeddings.usage.total_tokens as f64 * 0.12 / 1_000_000.0
+    );
     println!();
     println!("Query Processing (per request):");
     println!("   • Model: voyage-4-lite");
-    println!("   • Tokens: {} (for {} queries)", total_query_tokens, queries.len());
-    println!("   • Cost per query: ~${:.6}", 
-             (total_query_tokens as f64 / queries.len() as f64) * 0.02 / 1_000_000.0);
+    println!(
+        "   • Tokens: {} (for {} queries)",
+        total_query_tokens,
+        queries.len()
+    );
+    println!(
+        "   • Cost per query: ~${:.6}",
+        (total_query_tokens as f64 / queries.len() as f64) * 0.02 / 1_000_000.0
+    );
     println!();
     println!("Projected Annual Cost (10K queries/day):");
     println!("   • Indexing: $120 (one-time for 1M docs)");
-    println!("   • Queries: ${:.2}/year", 
-             10_000.0 * 365.0 * 0.02 / 1_000_000.0 * 
-             (total_query_tokens as f64 / queries.len() as f64));
+    println!(
+        "   • Queries: ${:.2}/year",
+        10_000.0 * 365.0 * 0.02 / 1_000_000.0 * (total_query_tokens as f64 / queries.len() as f64)
+    );
     println!();
     println!("Comparison with Symmetric Approach:");
     println!("   • Asymmetric (4-large + 4-lite): ~$193 first year");
