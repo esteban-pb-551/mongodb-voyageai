@@ -187,7 +187,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         // Embed the query with the same settings as documents
         let query_embed = client
-            .embed(query)
+            .embed(*query)
             .model(model::VOYAGE_4_LARGE)
             .input_type("query")
             .output_dimension(512)

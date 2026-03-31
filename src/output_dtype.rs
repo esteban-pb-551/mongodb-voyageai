@@ -112,7 +112,7 @@ mod tests {
 
     #[test]
     fn serialize_all_variants() {
-        let variants = vec![
+        let variants = [
             (OutputDtype::Float, r#""float""#),
             (OutputDtype::Int8, r#""int8""#),
             (OutputDtype::Uint8, r#""uint8""#),
@@ -156,7 +156,7 @@ mod tests {
 
     #[test]
     fn serialize_in_vec() {
-        let dtypes = vec![OutputDtype::Float, OutputDtype::Int8, OutputDtype::Binary];
+        let dtypes = [OutputDtype::Float, OutputDtype::Int8, OutputDtype::Binary];
         let json = serde_json::to_string(&dtypes).unwrap();
         assert_eq!(json, r#"["float","int8","binary"]"#);
     }
@@ -247,7 +247,7 @@ mod tests {
 
     #[test]
     fn clone_all_variants() {
-        let variants = vec![
+        let variants = [
             OutputDtype::Float,
             OutputDtype::Int8,
             OutputDtype::Uint8,
@@ -315,7 +315,7 @@ mod tests {
 
     #[test]
     fn debug_all_variants() {
-        let variants = vec![
+        let variants = [
             (OutputDtype::Float, "Float"),
             (OutputDtype::Int8, "Int8"),
             (OutputDtype::Uint8, "Uint8"),
@@ -331,7 +331,7 @@ mod tests {
 
     #[test]
     fn debug_in_vec() {
-        let dtypes = vec![OutputDtype::Float, OutputDtype::Int8];
+        let dtypes = [OutputDtype::Float, OutputDtype::Int8];
         let debug = format!("{:?}", dtypes);
         assert!(debug.contains("Float"));
         assert!(debug.contains("Int8"));
@@ -341,7 +341,7 @@ mod tests {
 
     #[test]
     fn match_all_variants() {
-        let variants = vec![
+        let variants = [
             OutputDtype::Float,
             OutputDtype::Int8,
             OutputDtype::Uint8,
@@ -400,7 +400,7 @@ mod tests {
 
     #[test]
     fn store_in_vec() {
-        let dtypes = vec![
+        let dtypes = [
             OutputDtype::Float,
             OutputDtype::Int8,
             OutputDtype::Binary,
