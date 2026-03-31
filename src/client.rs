@@ -401,6 +401,48 @@ impl Client {
         Self::new(&config)
     }
 
+    /// Creates a new client from environment variables.
+    ///
+    /// This is a convenience method that returns a [`Result`], allowing you to
+    /// handle the error if the API key is not set.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::MissingApiKey`] if `VOYAGEAI_API_KEY` is not set.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,no_run
+    /// use mongodb_voyageai::Client;
+    ///
+    /// let client = Client::try_from_env()?;
+    /// # Ok::<(), mongodb_voyageai::Error>(())
+    /// ```
+    pub fn try_from_env() -> Result<Self, Error> {
+        Self::new(&Config::new())
+    }
+
+    /// Creates a new client from environment variables.
+    ///
+    /// This is a convenience method for when you know the API key is configured.
+    /// If you need error handling, use [`Client::try_from_env`] instead.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `VOYAGEAI_API_KEY` environment variable is not set.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,no_run
+    /// use mongodb_voyageai::Client;
+    ///
+    /// let client = Client::from_env();
+    /// ```
+    pub fn from_env() -> Self {
+        Self::try_from_env()
+            .expect("Failed to create client: ensure VOYAGEAI_API_KEY is set")
+    }
+
     /// Creates an [`EmbedBuilder`] for the given input texts.
     ///
     /// The `input` argument accepts any type that implements [`IntoStringVec`],
