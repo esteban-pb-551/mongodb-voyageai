@@ -57,7 +57,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("📚 Step 1: Indexing documents with voyage-4-large (high quality)");
     println!("   This happens once, so we can afford the expensive model.\n");
 
-    let knowledge_base = vec![
+    let knowledge_base = [
         (
             "Quantum Computing Basics",
             "Quantum computers use qubits that can exist in superposition, \
@@ -123,7 +123,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("🔍 Step 2: Processing queries with voyage-4-lite (fast & cheap)");
     println!("   This happens on every request, so we use the efficient model.\n");
 
-    let queries = vec![
+    let queries = [
         "How do quantum computers work?",
         "What is distributed ledger technology?",
         "Explain serverless computing benefits",

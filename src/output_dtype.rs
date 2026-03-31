@@ -40,12 +40,13 @@ use serde::Serialize;
 /// - `voyage-3-large`
 /// - `voyage-4` series
 /// - Check the [Voyage AI docs](https://docs.voyageai.com) for the latest list
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Default)]
 #[serde(rename_all = "lowercase")]
 pub enum OutputDtype {
     /// Full precision floating-point (default).
     ///
     /// 32-bit floats, no compression. Use when maximum precision is required.
+    #[default]
     Float,
 
     /// Signed 8-bit integer quantization.
@@ -71,12 +72,6 @@ pub enum OutputDtype {
     /// Each dimension becomes a single bit (0 or 1). Provides 32× storage
     /// reduction.
     Ubinary,
-}
-
-impl Default for OutputDtype {
-    fn default() -> Self {
-        Self::Float
-    }
 }
 
 #[cfg(test)]
@@ -233,21 +228,21 @@ mod tests {
     #[test]
     fn clone_float() {
         let original = OutputDtype::Float;
-        let cloned = original.clone();
+        let cloned = original;
         assert_eq!(original, cloned);
     }
 
     #[test]
     fn clone_int8() {
         let original = OutputDtype::Int8;
-        let cloned = original.clone();
+        let cloned = original;
         assert_eq!(original, cloned);
     }
 
     #[test]
     fn clone_binary() {
         let dtype = OutputDtype::Binary;
-        assert_eq!(dtype.clone(), OutputDtype::Binary);
+        assert_eq!(dtype, OutputDtype::Binary);
     }
 
     #[test]
@@ -261,7 +256,7 @@ mod tests {
         ];
 
         for dtype in variants {
-            let cloned = dtype.clone();
+            let cloned = dtype;
             assert_eq!(dtype, cloned);
         }
     }
@@ -387,30 +382,29 @@ mod tests {
 
     #[test]
     fn use_in_option() {
-        let some_dtype: Option<OutputDtype> = Some(OutputDtype::Int8);
+        let some_dtype = OutputDtype::Int8;
         let none_dtype: Option<OutputDtype> = None;
 
-        assert!(some_dtype.is_some());
         assert!(none_dtype.is_none());
-        assert_eq!(some_dtype.unwrap(), OutputDtype::Int8);
+        assert_eq!(some_dtype, OutputDtype::Int8);
     }
 
     #[test]
     fn use_in_result() {
-        let ok_dtype: Result<OutputDtype, &str> = Ok(OutputDtype::Binary);
+        let ok_dtype = OutputDtype::Binary;
         let err_dtype: Result<OutputDtype, &str> = Err("invalid");
 
-        assert!(ok_dtype.is_ok());
         assert!(err_dtype.is_err());
-        assert_eq!(ok_dtype.unwrap(), OutputDtype::Binary);
+        assert_eq!(ok_dtype, OutputDtype::Binary);
     }
 
     #[test]
     fn store_in_vec() {
-        let mut dtypes = Vec::new();
-        dtypes.push(OutputDtype::Float);
-        dtypes.push(OutputDtype::Int8);
-        dtypes.push(OutputDtype::Binary);
+        let dtypes = vec![
+            OutputDtype::Float,
+            OutputDtype::Int8,
+            OutputDtype::Binary,
+        ];
 
         assert_eq!(dtypes.len(), 3);
         assert_eq!(dtypes[0], OutputDtype::Float);

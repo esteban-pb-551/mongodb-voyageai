@@ -89,7 +89,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // ── Step 1: Build the knowledge base ─────────────────────────────────────
     println!("📚 Step 1: Indexing documents with int8 quantization...");
 
-    let knowledge_base = vec![
+    let knowledge_base = [
         (
             "Rust Memory Safety",
             "Rust guarantees memory safety through its ownership system. \
@@ -176,7 +176,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     // ── Step 2: Process queries ──────────────────────────────────────────────
-    let queries = vec![
+    let queries = [
         "How does Rust prevent memory bugs?",
         "What are the best Python libraries for ML?",
         "Explain vector embeddings in AI",
@@ -187,7 +187,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         // Embed the query with the same settings as documents
         let query_embed = client
-            .embed(*query)
+            .embed(query)
             .model(model::VOYAGE_4_LARGE)
             .input_type("query")
             .output_dimension(512)
@@ -216,7 +216,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             candidates.iter().map(|d| d.content.as_str()).collect();
 
         let rerank_result = client
-            .rerank(*query, &candidate_contents)
+            .rerank(query, &candidate_contents)
             .model(model::RERANK_2_5)
             .top_k(1)
             .send()
