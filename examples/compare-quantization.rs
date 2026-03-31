@@ -15,7 +15,10 @@ use mongodb_voyageai::{Client, model, OutputDtype};
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Reads VOYAGEAI_API_KEY from the environment
-    let client = Client::from_env();
+    let client = Client::try_from_env().unwrap_or_else(|e| {
+        eprintln!("Error: {}", e);
+        std::process::exit(1);
+    });
 
     // Sample texts for embedding
     let texts = vec![

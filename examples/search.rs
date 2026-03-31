@@ -37,7 +37,10 @@ fn euclidean_distance(src: &[f64], dst: &[f64]) -> f64 {
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Reads VOYAGEAI_API_KEY from the environment
-    let client = Client::from_env();
+    let client = Client::try_from_env().unwrap_or_else(|e| {
+        eprintln!("Error: {}", e);
+        std::process::exit(1);
+    });
 
     // ── Stage 0: build the document store ────────────────────────────────────
     // In a real application these would come from a database; here we use a

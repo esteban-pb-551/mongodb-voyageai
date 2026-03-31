@@ -14,7 +14,7 @@ Add `mongodb-voyageai` to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-mongodb-voyageai = "0.1.0"
+mongodb-voyageai = "0.1.1"
 tokio = { version = "1", features = ["full"] }
 ```
 
@@ -23,12 +23,12 @@ Requires **Rust edition 2024** (rustc 1.85+).
 ## Quick Start
 
 ```rust
-use mongodb_voyageai::{Client, Config, model};
+use mongodb_voyageai::{Client, model};
 
 #[tokio::main]
 async fn main() -> Result<(), mongodb_voyageai::Error> {
     // Reads VOYAGEAI_API_KEY from the environment by default
-    let client = Client::new(&Config::new())?;
+    let client = Client::from_env();
 
     // Generate an embedding
     let embed = client
@@ -48,11 +48,12 @@ async fn main() -> Result<(), mongodb_voyageai::Error> {
 ### Multiple Embeddings
 
 ```rust
-use mongodb_voyageai::{Client, Config};
+use mongodb_voyageai::Client;
 
 #[tokio::main]
 async fn main() -> Result<(), mongodb_voyageai::Error> {
-    let client = Client::new(&Config::new())?;
+    // Reads VOYAGEAI_API_KEY from the environment by default
+    let client = Client::from_env();
 
     let input = vec![
         "John is a musician.",
@@ -92,11 +93,12 @@ async fn main() -> Result<(), mongodb_voyageai::Error> {
 Voyage AI models with Quantization-Aware Training support multiple output formats that dramatically reduce storage costs:
 
 ```rust
-use mongodb_voyageai::{Client, Config, model, OutputDtype};
+use mongodb_voyageai::{Client, model, OutputDtype};
 
 #[tokio::main]
 async fn main() -> Result<(), mongodb_voyageai::Error> {
-    let client = Client::new(&Config::new())?;
+    // Reads VOYAGEAI_API_KEY from the environment by default
+    let client = Client::from_env();
 
     // 4× storage reduction with minimal quality loss
     let embed = client
@@ -139,11 +141,12 @@ For detailed performance benchmarks and optimization guidelines, see:
 ### Reranking
 
 ```rust
-use mongodb_voyageai::{Client, Config};
+use mongodb_voyageai::Client;
 
 #[tokio::main]
 async fn main() -> Result<(), mongodb_voyageai::Error> {
-    let client = Client::new(&Config::new())?;
+    // Reads VOYAGEAI_API_KEY from the environment by default
+    let client = Client::from_env();
 
     let query = "Who should I call if my pipes are leaking?";
 
