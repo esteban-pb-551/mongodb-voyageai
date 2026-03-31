@@ -274,6 +274,38 @@ Pre-defined model constants are available in the `mongodb_voyageai::model` modul
 
 **Recommended:** Use `rerank-2.5` for best quality or `rerank-2.5-lite` for balanced latency/quality. Both support 32K context length and instruction-following.
 
+## Note for Linux Installation
+
+This crate uses `native-tls`, which depends on OpenSSL on Linux. Before building,
+install the required system package for your distribution:
+
+**Debian / Ubuntu**
+```bash
+sudo apt update && sudo apt install libssl-dev pkg-config
+```
+
+**Fedora / RHEL / CentOS**
+```bash
+sudo dnf install openssl-devel pkg-config
+```
+
+**Arch Linux**
+```bash
+sudo pacman -S openssl pkg-config
+```
+
+**Alpine Linux**
+```bash
+sudo apk add openssl-dev pkgconfig
+```
+
+> `pkg-config` is required so the Rust build system can locate the OpenSSL
+> headers and libraries on your system.
+
+No additional setup is needed on **Windows** (uses SChannel) or **macOS**
+(uses Secure Transport), as both platforms provide a native TLS implementation
+out of the box.
+
 ## Error Handling
 
 All fallible operations return `Result<T, mongodb_voyageai::Error>`:
