@@ -123,6 +123,8 @@ pub mod output_dtype;
 pub mod rerank;
 pub mod reranking;
 pub mod usage;
+pub mod chunk;
+pub mod pairwise;
 
 pub use client::{Client, Error};
 pub use config::Config;
