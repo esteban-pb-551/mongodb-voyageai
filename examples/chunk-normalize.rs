@@ -27,7 +27,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Recursive chunking (best strategy for RAG)
     let config = ChunkConfig {
-        chunk_size: 500,   // ~150 tokens — adjusted to model
+        // 500 of chunk size = ~150 tokens — adjusted to model
+        chunk_size: 250, 
         chunk_overlap: 20,
     };
 
@@ -78,8 +79,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let documents_embeddings = Array2::from_shape_vec((n_docs, n_features), flat)?;
 
     // ── Asymmetric retrieval: query with voyage-4-lite ─────────────────
-    // let query_text = "What foods are part of a healthy diet?";
-    let query_text = "Why is Pakistan's relationship with Saudi Arabia described as an 'awkward position' regarding the conflict with Iran?";
+    let query_text = "What foods are part of a healthy diet?";
 
     let query_embeds = client
         .embed(vec![query_text])
