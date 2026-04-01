@@ -5,6 +5,48 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.2] - 2026-04-01
+
+### Added
+
+- **Contextualized Chunk Embeddings**: New support for Voyage AI's contextualized chunk embedding models
+  - `Client::contextualized_embed()` method for generating context-aware embeddings
+  - `ContextualizedEmbed` response type with `results` containing embeddings per document
+  - `ContextualizedEmbeddingsResult` with `embeddings()` method to access embedding vectors
+  - `ContextualizedEmbedBuilder` with fluent API for configuration:
+    - `model()`: Select model (default: `voyage-context-3`)
+    - `input_type()`: Specify `"query"` or `"document"`
+    - `output_dimension()`: Reduce dimensionality (256, 512, 1024, 2048)
+    - `output_dtype()`: Apply quantization (float, int8, uint8, binary, ubinary)
+  - `IntoVecVecString` trait for flexible input types:
+    - `Vec<Vec<&str>>`: Consumes the vector
+    - `Vec<Vec<String>>`: Consumes the vector
+    - `&Vec<Vec<&str>>`: Borrows without moving (original stays accessible)
+    - `&Vec<Vec<String>>`: Borrows without moving (original stays accessible)
+  - New module `context` with complete implementation
+  - Example: `examples/contextualized-embeddings.rs` demonstrating document chunks, queries, and quantization
+  - Comprehensive documentation: `CONTEXTUALIZED_EMBEDDINGS_GUIDE.md` with:
+    - Detailed explanation of contextualized embeddings
+    - When and how to use them
+    - Complete RAG pipeline example
+    - Comparison with standard embeddings
+    - Best practices and optimization tips
+
+### Changed
+
+- Updated `README.md` with contextualized embeddings section and usage examples
+- Enhanced `lib.rs` to export `context` module and `ContextualizedEmbed` type
+
+### Technical Details
+
+- Correctly handles nested API response structure with `data` arrays
+- Maintains document-level context when embedding chunks
+- Supports up to 1,000 inputs, 120K total tokens, and 16K total chunks
+- Compatible with all quantization options for storage optimization
+- Full test coverage with 5 new unit tests (176 total tests passing)
+
+[0.1.2]: https://github.com/esteban-pb-551/mongodb-voyageai/releases/tag/v0.1.2
+
 ## [0.1.1] - 2026-03-30
 
 ### Added

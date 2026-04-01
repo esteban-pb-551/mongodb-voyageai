@@ -445,16 +445,12 @@ fn strip_markdown(text: &str) -> String {
 
         // ATX headings
         if processed.trim_start().starts_with('#') {
-            processed = processed
-                .trim_start_matches(|c: char| c == '#' || c == ' ')
-                .to_string();
+            processed = processed.trim_start_matches(['#', ' ']).to_string();
         }
 
         // Blockquotes
         if processed.trim_start().starts_with('>') {
-            processed = processed
-                .trim_start_matches(|c: char| c == '>' || c == ' ')
-                .to_string();
+            processed = processed.trim_start_matches(['>', ' ']).to_string();
         }
 
         // Inline patterns — longer delimiters first to avoid partial matches
@@ -491,11 +487,7 @@ fn is_horizontal_rule(line: &str) -> bool {
 /// Remove paired inline delimiters (e.g. `**bold**` → `bold`).
 fn strip_inline_delimiters(text: &str, delimiter: &str) -> String {
     let mut result = text.to_string();
-    loop {
-        let start = match result.find(delimiter) {
-            Some(i) => i,
-            None => break,
-        };
+    while let Some(start) = result.find(delimiter) {
         let after_open = start + delimiter.len();
         match result[after_open..].find(delimiter) {
             Some(rel_end) => {
@@ -554,13 +546,19 @@ mod tests {
 
     #[test]
     fn test_fix_hyphenation_line_break() {
-        assert_eq!(fix_hyphenation("infor-\nmation is power"), "information is power");
+        assert_eq!(
+            fix_hyphenation("infor-\nmation is power"),
+            "information is power"
+        );
     }
 
     #[test]
     fn test_fix_hyphenation_preserves_intentional() {
         // "well-known" on the same line must NOT be touched
-        assert_eq!(fix_hyphenation("well-known\nnext line"), "well-known\nnext line");
+        assert_eq!(
+            fix_hyphenation("well-known\nnext line"),
+            "well-known\nnext line"
+        );
     }
 
     #[test]
@@ -571,7 +569,10 @@ mod tests {
     #[test]
     fn test_unicode_punctuation_quotes() {
         let input = "\u{201C}Hello\u{201D} it\u{2019}s fine\u{2026}";
-        assert_eq!(normalize_unicode_punctuation(input), "\"Hello\" it's fine...");
+        assert_eq!(
+            normalize_unicode_punctuation(input),
+            "\"Hello\" it's fine..."
+        );
     }
 
     #[test]
@@ -597,13 +598,19 @@ mod tests {
     #[test]
     fn test_collapse_inline_whitespace() {
         let input = "one   two\t\tthree\nfour  five";
-        assert_eq!(collapse_inline_whitespace(input), "one two three\nfour five");
+        assert_eq!(
+            collapse_inline_whitespace(input),
+            "one two three\nfour five"
+        );
     }
 
     #[test]
     fn test_collapse_blank_lines() {
         let input = "para one\n\n\n\npara two\n\n\npara three";
-        assert_eq!(collapse_blank_lines(input), "para one\n\npara two\n\npara three");
+        assert_eq!(
+            collapse_blank_lines(input),
+            "para one\n\npara two\n\npara three"
+        );
     }
 
     #[test]
@@ -673,7 +680,10 @@ mod tests {
 
     #[test]
     fn test_strip_markdown_blockquote() {
-        assert_eq!(strip_markdown("> This is a quote").trim(), "This is a quote");
+        assert_eq!(
+            strip_markdown("> This is a quote").trim(),
+            "This is a quote"
+        );
     }
 
     #[test]
@@ -688,9 +698,18 @@ mod tests {
     fn test_strip_markdown_fenced_block_content_preserved() {
         let input = "Intro\n```rust\nlet x = 1;\n```\nOutro";
         let out = strip_markdown(input);
-        assert!(out.contains("Intro"), "Should preserve text before code block");
-        assert!(out.contains("let x = 1;"), "Should preserve code block content");
-        assert!(out.contains("Outro"), "Should preserve text after code block");
+        assert!(
+            out.contains("Intro"),
+            "Should preserve text before code block"
+        );
+        assert!(
+            out.contains("let x = 1;"),
+            "Should preserve code block content"
+        );
+        assert!(
+            out.contains("Outro"),
+            "Should preserve text after code block"
+        );
         assert!(!out.contains("```"), "Should remove fence markers");
     }
 

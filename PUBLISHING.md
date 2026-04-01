@@ -134,10 +134,13 @@ cargo fmt --check
 cargo clippy --all-targets
 
 # 3. Unit tests + doc-tests
-cargo test
+cargo test --lib
 
 # 4. Build docs (catch broken links)
 RUSTDOCFLAGS="-D warnings" cargo doc --no-deps
+
+# (powershell)
+$env:RUSTDOCFLAGS="-D warnings"; cargo doc --no-deps
 
 # 5. Check for missing docs on public items
 cargo rustc --lib -- -W missing_docs

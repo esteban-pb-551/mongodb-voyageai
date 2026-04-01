@@ -14,7 +14,7 @@ Add `mongodb-voyageai` to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-mongodb-voyageai = "0.1.1"
+mongodb-voyageai = "0.1.2"
 tokio = { version = "1", features = ["full"] }
 ```
 
@@ -87,6 +87,63 @@ async fn main() -> Result<(), mongodb_voyageai::Error> {
 | `truncation`       | `Option<bool>`    | `None`               | Truncate inputs exceeding context       |
 | `output_dimension` | `Option<u32>`     | `None`               | Reduce embedding dimensionality         |
 | `output_dtype`     | `Option<OutputDtype>` | `None` (float)   | Quantization type (int8, uint8, binary, ubinary) |
+
+### Contextualized Chunk Embeddings
+
+Voyage AI provides contextualized chunk embeddings that maintain document context when embedding chunks. This is particularly useful for RAG applications where chunks need to preserve their relationship to the parent document.
+
+```rust
+use mongodb_voyageai::Client;
+
+#[tokio::main]
+async fn main() -> Result<(), mongodb_voyageai::Error> {
+    let client = Client::from_env();
+
+    // Document chunks - each inner list contains chunks from one document
+    let documents = vec![
+        vec![
+            "text_1_1",
+            "text_1_2",
+        ],
+        vec![
+            "text_2_1",
+            "text_2_2",
+        ],
+    ];
+
+    let embed = client
+        .contextualized_embed(&documents)
+        .model("voyage-context-3")
+        .input_type("document")
+        .send()
+        .await?;
+
+    println!("Model: {}", embed.model);
+    println!("Documents: {}", embed.results.len());
+    
+    for (i, result) in embed.results.iter().enumerate() {
+        println!(
+            "  Document {}: {} chunks",
+            i,
+            result.embeddings().len()
+        );
+    }
+
+    Ok(())
+}
+```
+
+#### Contextualized Embed Parameters
+
+| Parameter          | Type              | Default              | Description                            |
+|--------------------|-------------------|----------------------|----------------------------------------|
+| `inputs`           | `Vec<Vec<String>>`| *required*           | List of lists of texts to embed        |
+| `model`            | `Option<&str>`    | `"voyage-context-3"` | Model identifier                       |
+| `input_type`       | `Option<&str>`    | `None`               | `"query"` or `"document"`              |
+| `output_dimension` | `Option<u32>`     | `None`               | Reduce embedding dimensionality         |
+| `output_dtype`     | `Option<OutputDtype>` | `None` (float)   | Quantization type (int8, uint8, binary, ubinary) |
+
+**Note:** For queries, each inner list should contain a single query. For documents, each inner list typically contains chunks from a single document ordered by their position.
 
 ### Quantization (Storage Optimization)
 
@@ -335,6 +392,14 @@ Four runnable examples are included in the [examples/](examples/) directory. Eac
 
 ```bash
 export VOYAGEAI_API_KEY="pa-..."
+```
+
+### Contextualized Embeddings
+
+Demonstrates how to use contextualized chunk embeddings to maintain document context when embedding chunks.
+
+```bash
+cargo run --example contextualized-embeddings
 ```
 
 ### Semantic Search

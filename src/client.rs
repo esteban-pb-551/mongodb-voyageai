@@ -4,6 +4,7 @@ use reqwest::header::{AUTHORIZATION, CONTENT_TYPE, HeaderMap, HeaderValue};
 use serde::Serialize;
 
 use crate::config::Config;
+use crate::context::ContextualizedEmbed;
 use crate::embed::Embed;
 use crate::model;
 use crate::output_dtype::OutputDtype;
@@ -150,6 +151,105 @@ impl<S: AsRef<str>> IntoStringVec for &Vec<S> {
 impl<S: AsRef<str>> IntoStringVec for Vec<S> {
     fn into_string_vec(self) -> Vec<String> {
         self.into_iter().map(|s| s.as_ref().to_owned()).collect()
+    }
+}
+
+// ─── IntoVecVecString ────────────────────────────────────────────────────────
+
+/// Conversion trait for contextualized embeddings that accepts nested vectors
+/// in multiple forms.
+///
+/// Implemented for:
+///
+/// | Type                  | Behaviour                                     |
+/// |-----------------------|-----------------------------------------------|
+/// | `Vec<Vec<&str>>`      | Converts each inner vec to `Vec<String>`      |
+/// | `Vec<Vec<String>>`    | Consumes the vec — no extra allocation        |
+/// | `&Vec<Vec<&str>>`     | Borrows and converts to `Vec<Vec<String>>`    |
+/// | `&Vec<Vec<String>>`   | Borrows and converts to `Vec<Vec<String>>`    |
+///
+/// # Examples
+///
+/// ```rust
+/// use mongodb_voyageai::client::IntoVecVecString;
+///
+/// // Vec<Vec<&str>>
+/// let inputs = vec![vec!["a", "b"], vec!["c"]];
+/// assert_eq!(
+///     inputs.into_vec_vec_string(),
+///     vec![vec!["a".to_string(), "b".to_string()], vec!["c".to_string()]]
+/// );
+///
+/// // Vec<Vec<String>>
+/// let inputs = vec![vec!["x".to_string()], vec!["y".to_string()]];
+/// let result = inputs.into_vec_vec_string();
+/// assert_eq!(result, vec![vec!["x"], vec!["y"]]);
+///
+/// // &Vec<Vec<&str>> - original stays accessible
+/// let inputs = vec![vec!["a", "b"], vec!["c"]];
+/// let result = (&inputs).into_vec_vec_string();
+/// assert_eq!(result, vec![vec!["a".to_string(), "b".to_string()], vec!["c".to_string()]]);
+/// // inputs is still accessible here
+/// assert_eq!(inputs[0][0], "a");
+/// ```
+pub trait IntoVecVecString {
+    /// Converts `self` into a `Vec<Vec<String>>`.
+    fn into_vec_vec_string(self) -> Vec<Vec<String>>;
+}
+
+/// Converts `Vec<Vec<&str>>` into `Vec<Vec<String>>`.
+impl IntoVecVecString for Vec<Vec<&str>> {
+    fn into_vec_vec_string(self) -> Vec<Vec<String>> {
+        self.into_iter()
+            .map(|inner| inner.into_iter().map(|s| s.to_owned()).collect())
+            .collect()
+    }
+}
+
+/// Converts `Vec<Vec<String>>` into `Vec<Vec<String>>` (no-op move).
+impl IntoVecVecString for Vec<Vec<String>> {
+    fn into_vec_vec_string(self) -> Vec<Vec<String>> {
+        self
+    }
+}
+
+/// Borrows `&Vec<Vec<&str>>` and converts to `Vec<Vec<String>>`.
+///
+/// The original binding is **not** moved and can be used after the call.
+///
+/// ```rust
+/// use mongodb_voyageai::client::IntoVecVecString;
+///
+/// let inputs = vec![vec!["a", "b"], vec!["c"]];
+/// let _ = (&inputs).into_vec_vec_string();
+/// // `inputs` is still accessible here
+/// println!("{}", inputs[0][0]);
+/// ```
+impl IntoVecVecString for &Vec<Vec<&str>> {
+    fn into_vec_vec_string(self) -> Vec<Vec<String>> {
+        self.iter()
+            .map(|inner| inner.iter().map(|s| s.to_string()).collect())
+            .collect()
+    }
+}
+
+/// Borrows `&Vec<Vec<String>>` and converts to `Vec<Vec<String>>`.
+///
+/// The original binding is **not** moved and can be used after the call.
+///
+/// ```rust
+/// use mongodb_voyageai::client::IntoVecVecString;
+///
+/// let inputs = vec![vec!["a".to_string()], vec!["b".to_string()]];
+/// let _ = (&inputs).into_vec_vec_string();
+/// // `inputs` is still accessible here
+/// println!("{}", inputs[0][0]);
+/// ```
+impl IntoVecVecString for &Vec<Vec<String>> {
+    fn into_vec_vec_string(self) -> Vec<Vec<String>> {
+        self.iter()
+            .map(|inner| inner.iter().map(|s| s.to_string()).collect())
+            .collect()
     }
 }
 
@@ -559,6 +659,67 @@ impl Client {
         documents: I,
     ) -> RerankBuilder<'a> {
         RerankBuilder::new(self, query, documents.into_string_vec())
+    }
+
+    /// Creates a [`ContextualizedEmbedBuilder`] for the given inputs.
+    ///
+    /// The `inputs` argument is a list of lists, where each inner list contains
+    /// texts to be vectorized together. Most commonly, each inner list contains
+    /// chunks from a single document, ordered by their position in the document.
+    ///
+    /// The `inputs` argument accepts any type that implements [`IntoVecVecString`],
+    /// which covers the following without extra allocation on the caller side:
+    ///
+    /// | Argument type         | Example                                    |
+    /// |-----------------------|--------------------------------------------|
+    /// | `Vec<Vec<&str>>`      | `client.contextualized_embed(chunks)`      |
+    /// | `Vec<Vec<String>>`    | `client.contextualized_embed(owned)`       |
+    /// | `&Vec<Vec<&str>>`     | `client.contextualized_embed(&chunks)`     |
+    /// | `&Vec<Vec<String>>`   | `client.contextualized_embed(&owned)`      |
+    ///
+    /// # Arguments
+    ///
+    /// * `inputs` — A list of lists of texts. Each inner list represents a set
+    ///   of text elements that will be embedded together with context.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,no_run
+    /// # use mongodb_voyageai::{Client, model};
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), mongodb_voyageai::Error> {
+    /// let client = Client::with_api_key("pa-...")?;
+    ///
+    /// // Document chunks - original vec stays available
+    /// let chunks = vec![
+    ///     vec!["doc 1 chunk 1", "doc 1 chunk 2"],
+    ///     vec!["doc 2 chunk 1", "doc 2 chunk 2"],
+    /// ];
+    /// let embed = client
+    ///     .contextualized_embed(&chunks)
+    ///     .model("voyage-context-3")
+    ///     .input_type("document")
+    ///     .send()
+    ///     .await?;
+    /// println!("original still accessible: {}", chunks[0][0]);
+    ///
+    /// // Single query (each inner list should contain one query)
+    /// let queries = vec![vec!["What is Rust?"]];
+    /// let query_embed = client
+    ///     .contextualized_embed(queries)
+    ///     .input_type("query")
+    ///     .send()
+    ///     .await?;
+    ///
+    /// assert_eq!(embed.results.len(), 2);
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn contextualized_embed<I: IntoVecVecString>(
+        &self,
+        inputs: I,
+    ) -> ContextualizedEmbedBuilder<'_> {
+        ContextualizedEmbedBuilder::new(self, inputs.into_vec_vec_string())
     }
 }
 
@@ -1022,6 +1183,220 @@ impl<'a> RerankBuilder<'a> {
         }
 
         Ok(Rerank::parse(&body)?)
+    }
+}
+
+// ─── ContextualizedEmbedBuilder ──────────────────────────────────────────────
+
+/// A builder for constructing and sending contextualized embedding requests.
+///
+/// Created via [`Client::contextualized_embed`]. Chain setter methods to configure
+/// optional parameters, then call [`send`](ContextualizedEmbedBuilder::send) to
+/// execute the request.
+///
+/// # Examples
+///
+/// ```rust,no_run
+/// # use mongodb_voyageai::{Client, OutputDtype};
+/// # #[tokio::main]
+/// # async fn main() -> Result<(), mongodb_voyageai::Error> {
+/// let client = Client::with_api_key("pa-...")?;
+///
+/// // Document chunks with context
+/// let chunks = vec![
+///     vec!["chunk 1 from doc 1", "chunk 2 from doc 1"],
+///     vec!["chunk 1 from doc 2"],
+/// ];
+/// let embed = client
+///     .contextualized_embed(chunks)
+///     .model("voyage-context-3")
+///     .input_type("document")
+///     .output_dimension(512)
+///     .output_dtype(OutputDtype::Int8)
+///     .send()
+///     .await?;
+///
+/// assert_eq!(embed.results.len(), 2);
+/// # Ok(())
+/// # }
+/// ```
+pub struct ContextualizedEmbedBuilder<'a> {
+    client: &'a Client,
+    inputs: Vec<Vec<String>>,
+    model: &'a str,
+    input_type: Option<&'a str>,
+    output_dimension: Option<u32>,
+    output_dtype: Option<OutputDtype>,
+}
+
+impl<'a> ContextualizedEmbedBuilder<'a> {
+    fn new(client: &'a Client, inputs: Vec<Vec<String>>) -> Self {
+        Self {
+            client,
+            inputs,
+            model: "voyage-context-3",
+            input_type: None,
+            output_dimension: None,
+            output_dtype: None,
+        }
+    }
+
+    /// Overrides the contextualized embedding model.
+    ///
+    /// Defaults to `"voyage-context-3"` when not set.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,no_run
+    /// # use mongodb_voyageai::Client;
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), mongodb_voyageai::Error> {
+    /// # let client = Client::with_api_key("pa-...")?;
+    /// let embed = client
+    ///     .contextualized_embed(vec![vec!["text"]])
+    ///     .model("voyage-context-3")
+    ///     .send()
+    ///     .await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn model(mut self, model: &'a str) -> Self {
+        self.model = model;
+        self
+    }
+
+    /// Sets the input type hint for the model.
+    ///
+    /// Accepted values are `"query"` and `"document"`. For queries, each inner
+    /// list should contain a single query. For documents, each inner list
+    /// typically contains chunks from a single document.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,no_run
+    /// # use mongodb_voyageai::Client;
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), mongodb_voyageai::Error> {
+    /// # let client = Client::with_api_key("pa-...")?;
+    /// // Embed document chunks
+    /// let doc_embed = client
+    ///     .contextualized_embed(vec![vec!["chunk 1", "chunk 2"]])
+    ///     .input_type("document")
+    ///     .send()
+    ///     .await?;
+    ///
+    /// // Embed queries
+    /// let query_embed = client
+    ///     .contextualized_embed(vec![vec!["search query"]])
+    ///     .input_type("query")
+    ///     .send()
+    ///     .await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn input_type(mut self, input_type: &'a str) -> Self {
+        self.input_type = Some(input_type);
+        self
+    }
+
+    /// Reduces the output embedding to the given number of dimensions.
+    ///
+    /// voyage-context-3 supports: 2048, 1024 (default), 512, and 256.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,no_run
+    /// # use mongodb_voyageai::Client;
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), mongodb_voyageai::Error> {
+    /// # let client = Client::with_api_key("pa-...")?;
+    /// let embed = client
+    ///     .contextualized_embed(vec![vec!["text"]])
+    ///     .output_dimension(512)
+    ///     .send()
+    ///     .await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn output_dimension(mut self, dim: u32) -> Self {
+        self.output_dimension = Some(dim);
+        self
+    }
+
+    /// Sets the output data type for quantization.
+    ///
+    /// Options: Float (default), Int8, Uint8, Binary, Ubinary.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,no_run
+    /// # use mongodb_voyageai::{Client, OutputDtype};
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), mongodb_voyageai::Error> {
+    /// # let client = Client::with_api_key("pa-...")?;
+    /// let embed = client
+    ///     .contextualized_embed(vec![vec!["text"]])
+    ///     .output_dimension(512)
+    ///     .output_dtype(OutputDtype::Int8)
+    ///     .send()
+    ///     .await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn output_dtype(mut self, dtype: OutputDtype) -> Self {
+        self.output_dtype = Some(dtype);
+        self
+    }
+
+    /// Sends the contextualized embedding request and returns the result.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::RequestError`] — API returned a non-2xx status.
+    /// - [`Error::Http`] — Network or transport failure.
+    /// - [`Error::Json`] — Response body could not be parsed.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,no_run
+    /// # use mongodb_voyageai::Client;
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), mongodb_voyageai::Error> {
+    /// # let client = Client::with_api_key("pa-...")?;
+    /// let embed = client
+    ///     .contextualized_embed(vec![vec!["chunk 1", "chunk 2"]])
+    ///     .send()
+    ///     .await?;
+    /// println!("results: {}", embed.results.len());
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn send(self) -> Result<ContextualizedEmbed, Error> {
+        let payload = crate::context::ContextualizedEmbedInput {
+            inputs: self.inputs,
+            model: self.model.to_string(),
+            input_type: self.input_type.map(|s| s.to_string()),
+            output_dimension: self.output_dimension,
+            output_dtype: self.output_dtype,
+        };
+
+        let url = format!(
+            "{}/{}/contextualizedembeddings",
+            self.client.host, self.client.version
+        );
+        let response = self.client.http.post(&url).json(&payload).send().await?;
+
+        let status = response.status();
+        let body = response.text().await?;
+
+        if !status.is_success() {
+            return Err(Error::RequestError {
+                status: status.as_u16(),
+                body,
+            });
+        }
+
+        Ok(ContextualizedEmbed::parse(&body)?)
     }
 }
 

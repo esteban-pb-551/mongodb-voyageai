@@ -115,19 +115,21 @@
 //! # }
 //! ```
 
+pub mod chunk;
 pub mod client;
 pub mod config;
+pub mod context;
 pub mod embed;
 pub mod model;
 pub mod output_dtype;
+pub mod pairwise;
 pub mod rerank;
 pub mod reranking;
 pub mod usage;
-pub mod chunk;
-pub mod pairwise;
 
 pub use client::{Client, Error};
 pub use config::Config;
+pub use context::ContextualizedEmbed;
 pub use embed::Embed;
 pub use output_dtype::OutputDtype;
 pub use rerank::Rerank;
