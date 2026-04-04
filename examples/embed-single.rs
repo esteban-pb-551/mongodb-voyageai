@@ -34,7 +34,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Model:        {}", embed.model);
     println!("Tokens used:  {}", embed.usage.total_tokens);
 
-    // `embedding(i)` returns a `&[f32]` for the i-th input.
+    // `embedding(i)` returns an `Option<&Vec<f32>>` for the i-th input.
     // It returns `None` if the index is out of range.
     let embedding = embed.embedding(0).expect("no embedding returned");
     println!("Dimensions:   {}", embedding.len());
