@@ -23,7 +23,7 @@ fn embed_json_multi(n: usize) -> String {
             format!(
                 r#"{{"object": "embedding", "embedding": [{}], "index": {}}}"#,
                 (0..128)
-                    .map(|j| format!("{:.6}", (i * 128 + j) as f64 * 0.001))
+                    .map(|j| format!("{:.6}", (i * 128 + j) as f32 * 0.001))
                     .collect::<Vec<_>>()
                     .join(", "),
                 i
@@ -44,7 +44,7 @@ fn rerank_json(n: usize) -> String {
                 r#"{{"index": {}, "document": "Document number {}", "relevance_score": {:.4}}}"#,
                 i,
                 i,
-                1.0 - (i as f64 * 0.1)
+                1.0 - (i as f32 * 0.1)
             )
         })
         .collect();

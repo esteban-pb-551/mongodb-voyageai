@@ -7,7 +7,7 @@ use crate::usage::Usage;
 
 #[derive(Debug, Clone, Deserialize)]
 struct EmbeddingData {
-    embedding: Vec<f64>,
+    embedding: Vec<f32>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -71,7 +71,7 @@ pub struct Embed {
     /// Token usage for this request.
     pub usage: Usage,
     /// The embedding vectors, one per input text.
-    pub embeddings: Vec<Vec<f64>>,
+    pub embeddings: Vec<Vec<f32>>,
 }
 
 impl Embed {
@@ -124,7 +124,7 @@ impl Embed {
     ///
     /// assert!(embed.embedding(1).is_none());
     /// ```
-    pub fn embedding(&self, index: usize) -> Option<&Vec<f64>> {
+    pub fn embedding(&self, index: usize) -> Option<&Vec<f32>> {
         self.embeddings.get(index)
     }
 }
@@ -188,7 +188,7 @@ mod tests {
 
     #[test]
     fn parse_high_dimensional() {
-        let values: Vec<f64> = (0..1024).map(|i| i as f64 * 0.001).collect();
+        let values: Vec<f32> = (0..1024).map(|i| i as f32 * 0.001).collect();
         let values_json = serde_json::to_string(&values).unwrap();
         let json = format!(
             r#"{{"object":"list","data":[{{"object":"embedding","embedding":{},"index":0}}],"model":"voyage-3","usage":{{"total_tokens":1}}}}"#,
@@ -196,7 +196,7 @@ mod tests {
         );
         let embed = Embed::parse(&json).unwrap();
         assert_eq!(embed.embeddings[0].len(), 1024);
-        assert!((embed.embeddings[0][500] - 0.5).abs() < 1e-10);
+        assert!((embed.embeddings[0][500] - 0.5).abs() < 1e-6);
     }
 
     #[test]

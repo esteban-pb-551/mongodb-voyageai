@@ -57,7 +57,7 @@ use ndarray::{Array1, Array2, ArrayView1, ArrayView2};
 /// let similarity = cosine_similarity(x.view(), Some(y.view()));
 /// assert_eq!(similarity.shape(), &[2, 2]);
 /// ```
-pub fn cosine_similarity(x: ArrayView2<f64>, y: Option<ArrayView2<f64>>) -> Array2<f64> {
+pub fn cosine_similarity(x: ArrayView2<f32>, y: Option<ArrayView2<f32>>) -> Array2<f32> {
     // Normalize all rows to unit length (L2 normalization)
     let x_normalized = normalize_rows(x);
     let y_normalized = match y {
@@ -81,7 +81,7 @@ pub fn cosine_similarity(x: ArrayView2<f64>, y: Option<ArrayView2<f64>>) -> Arra
 /// # Returns
 ///
 /// A new matrix with the same shape where each row has unit length
-fn normalize_rows(x: ArrayView2<f64>) -> Array2<f64> {
+fn normalize_rows(x: ArrayView2<f32>) -> Array2<f32> {
     let mut normalized = x.to_owned();
 
     for mut row in normalized.rows_mut() {
@@ -115,7 +115,7 @@ fn normalize_rows(x: ArrayView2<f64>) -> Array2<f64> {
 /// # Returns
 ///
 /// A tuple containing:
-/// * `Array2<f64>` - Matrix of k nearest embeddings, shape (k, n_features)
+/// * `Array2<f32>` - Matrix of k nearest embeddings, shape (k, n_features)
 /// * `Array1<usize>` - Indices of the k nearest documents in the original matrix
 ///
 /// # Example
@@ -136,10 +136,10 @@ fn normalize_rows(x: ArrayView2<f64>) -> Array2<f64> {
 /// assert_eq!(top_indices[0], 0); // First document is most similar
 /// ```
 pub fn k_nearest_neighbors(
-    query_embedding: ArrayView1<f64>,
-    documents_embeddings: ArrayView2<f64>,
+    query_embedding: ArrayView1<f32>,
+    documents_embeddings: ArrayView2<f32>,
     k: usize,
-) -> (Array2<f64>, Array1<usize>) {
+) -> (Array2<f32>, Array1<usize>) {
     let n_docs = documents_embeddings.nrows();
 
     // Reshape query vector to 2D matrix (1, n_features) for cosine_similarity
@@ -150,7 +150,7 @@ pub fn k_nearest_neighbors(
 
     // Calculate cosine similarity between query and all documents
     let cosine_sim = cosine_similarity(query_matrix.view(), Some(documents_embeddings));
-    let sim_row: Vec<f64> = cosine_sim.row(0).to_vec();
+    let sim_row: Vec<f32> = cosine_sim.row(0).to_vec();
 
     // Create indices and sort by similarity (descending order)
     let mut sorted_indices: Vec<usize> = (0..n_docs).collect();
@@ -166,7 +166,7 @@ pub fn k_nearest_neighbors(
     let top_k_indices: Vec<usize> = sorted_indices[..k].to_vec();
 
     // Extract the embeddings for top k documents
-    let top_k_rows: Vec<f64> = top_k_indices
+    let top_k_rows: Vec<f32> = top_k_indices
         .iter()
         .flat_map(|&idx| documents_embeddings.row(idx).to_vec())
         .collect();
@@ -194,11 +194,11 @@ mod tests {
         let normalized = normalize_rows(x.view());
 
         // First row should be [1.0, 0.0, 0.0]
-        assert!((normalized[[0, 0]] - 1.0).abs() < 1e-10);
-        assert!((normalized[[0, 1]] - 0.0).abs() < 1e-10);
+        assert!((normalized[[0, 0]] - 1.0).abs() < 1e-6);
+        assert!((normalized[[0, 1]] - 0.0).abs() < 1e-6);
 
         // Second row should be [0.0, 1.0, 0.0]
-        assert!((normalized[[1, 1]] - 1.0).abs() < 1e-10);
+        assert!((normalized[[1, 1]] - 1.0).abs() < 1e-6);
     }
 
     #[test]
@@ -226,12 +226,12 @@ mod tests {
         let similarity = cosine_similarity(x.view(), None);
 
         // Diagonal should be 1.0 (self-similarity)
-        assert!((similarity[[0, 0]] - 1.0).abs() < 1e-10);
-        assert!((similarity[[1, 1]] - 1.0).abs() < 1e-10);
+        assert!((similarity[[0, 0]] - 1.0).abs() < 1e-6);
+        assert!((similarity[[1, 1]] - 1.0).abs() < 1e-6);
 
         // Off-diagonal should be 0.0 (orthogonal)
-        assert!((similarity[[0, 1]] - 0.0).abs() < 1e-10);
-        assert!((similarity[[1, 0]] - 0.0).abs() < 1e-10);
+        assert!((similarity[[0, 1]] - 0.0).abs() < 1e-6);
+        assert!((similarity[[1, 0]] - 0.0).abs() < 1e-6);
     }
 
     #[test]
@@ -249,8 +249,8 @@ mod tests {
         let similarity = cosine_similarity(x.view(), Some(y.view()));
 
         assert_eq!(similarity.shape(), &[1, 2]);
-        assert!((similarity[[0, 0]] - 1.0).abs() < 1e-10); // Same direction
-        assert!((similarity[[0, 1]] - 0.0).abs() < 1e-10); // Orthogonal
+        assert!((similarity[[0, 0]] - 1.0).abs() < 1e-6); // Same direction
+        assert!((similarity[[0, 1]] - 0.0).abs() < 1e-6); // Orthogonal
     }
 
     #[test]
@@ -261,7 +261,7 @@ mod tests {
         let similarity = cosine_similarity(x.view(), Some(y.view()));
 
         // Opposite vectors should have similarity -1.0
-        assert!((similarity[[0, 0]] + 1.0).abs() < 1e-10);
+        assert!((similarity[[0, 0]] + 1.0).abs() < 1e-6);
     }
 
     #[test]

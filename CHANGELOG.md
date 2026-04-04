@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.3] - 2026-04-04
+
+### Changed
+
+- **Embedding precision: `f64` → `f32`**: All embedding vectors now use `f32` instead of `f64`
+  - `Embed.embeddings` type changed from `Vec<Vec<f64>>` to `Vec<Vec<f32>>`
+  - `Embed.embedding()` returns `Option<&Vec<f32>>` instead of `Option<&Vec<f64>>`
+  - `ContextualizedEmbeddingsResult.embeddings()` returns `Vec<Vec<f32>>`
+  - `Reranking.relevance_score` changed from `f64` to `f32`
+  - `pairwise::cosine_similarity` module operates on `f32` matrices
+  - 50% memory reduction per embedding vector (4 bytes vs 8 bytes per dimension)
+  - No precision loss — VoyageAI API returns `float32` values
+
+### Fixed
+
+- Fixed doc test in `normalizer::normalize` missing `use` import
+- Fixed doc test in `normalizer::join_soft_line_breaks` referencing private function (marked `ignore`)
+- Fixed doc test in `ContextualizedEmbedInput` using incorrect import path (`client::` → `context::`)
+- Fixed doc test in `Rerank` struct running an example that requires API key (marked `no_run`)
+
+### Documentation
+
+- Updated `QUANTIZATION_GUIDE.md` code examples from `f64` to `f32`
+- Fixed README.md example count ("Four" → "Ten" runnable examples)
+
+[0.1.3]: https://github.com/esteban-pb-551/mongodb-voyageai/releases/tag/v0.1.3
+
 ## [0.1.2] - 2026-04-01
 
 ### Added

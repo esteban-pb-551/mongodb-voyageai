@@ -31,7 +31,7 @@ use mongodb_voyageai::{Client, OutputDtype, model};
 struct Document {
     title: String,
     content: String,
-    embedding: Vec<f64>, // In production, this would be Vec<i8>
+    embedding: Vec<f32>, // In production, this would be Vec<i8>
 }
 
 /// Simple in-memory vector store (in production, use MongoDB Atlas, Pinecone, etc.)
@@ -51,8 +51,8 @@ impl VectorStore {
     }
 
     /// Find top-K nearest neighbors using cosine similarity.
-    fn search(&self, query_embedding: &[f64], top_k: usize) -> Vec<&Document> {
-        let mut scored: Vec<(&Document, f64)> = self
+    fn search(&self, query_embedding: &[f32], top_k: usize) -> Vec<&Document> {
+        let mut scored: Vec<(&Document, f32)> = self
             .documents
             .iter()
             .map(|doc| {
@@ -69,10 +69,10 @@ impl VectorStore {
 }
 
 /// Computes cosine similarity between two vectors.
-fn cosine_similarity(a: &[f64], b: &[f64]) -> f64 {
-    let dot: f64 = a.iter().zip(b).map(|(x, y)| x * y).sum();
-    let norm_a: f64 = a.iter().map(|x| x * x).sum::<f64>().sqrt();
-    let norm_b: f64 = b.iter().map(|x| x * x).sum::<f64>().sqrt();
+fn cosine_similarity(a: &[f32], b: &[f32]) -> f32 {
+    let dot: f32 = a.iter().zip(b).map(|(x, y)| x * y).sum();
+    let norm_a: f32 = a.iter().map(|x| x * x).sum::<f32>().sqrt();
+    let norm_b: f32 = b.iter().map(|x| x * x).sum::<f32>().sqrt();
     dot / (norm_a * norm_b)
 }
 

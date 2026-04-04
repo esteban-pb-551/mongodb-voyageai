@@ -14,7 +14,7 @@ Add `mongodb-voyageai` to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-mongodb-voyageai = "0.1.2"
+mongodb-voyageai = "0.1.3"
 tokio = { version = "1", features = ["full"] }
 ```
 
@@ -388,7 +388,7 @@ match client.embed("hello").send().await {
 
 ## Examples
 
-Four runnable examples are included in the [examples/](examples/) directory. Each one requires a valid API key:
+Ten runnable examples are included in the [examples/](examples/) directory. Each one requires a valid API key:
 
 ```bash
 export VOYAGEAI_API_KEY="pa-..."

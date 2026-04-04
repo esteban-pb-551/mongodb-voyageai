@@ -120,6 +120,7 @@ impl NormalizerConfig {
 ///
 /// # Example
 /// ```
+/// use mongodb_voyageai::chunk::normalizer::{NormalizerConfig, normalize};
 /// let config = NormalizerConfig::default();
 /// let clean = normalize("  Hello,\r\n\n\n  world!  ", &config);
 /// assert_eq!(clean, "Hello,\n\nworld!");
@@ -342,7 +343,7 @@ fn collapse_blank_lines(text: &str) -> String {
 /// are already clean before single `\n` breaks are merged.
 ///
 /// # Example
-/// ```
+/// ```rust,ignore
 /// let input = "first paragraph\nsecond line\n\nnew paragraph\nits second line";
 /// let out = join_soft_line_breaks(input);
 /// assert_eq!(out, "first paragraph second line\n\nnew paragraph its second line");

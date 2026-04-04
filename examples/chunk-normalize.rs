@@ -93,7 +93,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let query_vector = query_embed.embedding(0).unwrap();
 
     // Calculate cosine similarity with each chunk
-    let mut similarities: Vec<(usize, f64)> = embed_response
+    let mut similarities: Vec<(usize, f32)> = embed_response
         .embeddings
         .iter()
         .enumerate()
@@ -121,10 +121,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 /// Simple cosine similarity calculation between two vectors
-fn cosine_similarity_simple(a: &[f64], b: &[f64]) -> f64 {
-    let dot_product: f64 = a.iter().zip(b.iter()).map(|(x, y)| x * y).sum();
-    let norm_a: f64 = a.iter().map(|x| x * x).sum::<f64>().sqrt();
-    let norm_b: f64 = b.iter().map(|x| x * x).sum::<f64>().sqrt();
+fn cosine_similarity_simple(a: &[f32], b: &[f32]) -> f32 {
+    let dot_product: f32 = a.iter().zip(b.iter()).map(|(x, y)| x * y).sum();
+    let norm_a: f32 = a.iter().map(|x| x * x).sum::<f32>().sqrt();
+    let norm_b: f32 = b.iter().map(|x| x * x).sum::<f32>().sqrt();
 
     if norm_a == 0.0 || norm_b == 0.0 {
         0.0

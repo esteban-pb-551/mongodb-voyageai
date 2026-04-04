@@ -298,7 +298,7 @@ use mongodb_voyageai::{Client, Config, model, OutputDtype};
 async fn build_rag_index(
     client: &Client,
     documents: &[&str],
-) -> Result<Vec<Vec<f64>>, Box<dyn std::error::Error>> {
+) -> Result<Vec<Vec<f32>>, Box<dyn std::error::Error>> {
     // Embed documents with Int8 quantization
     let embed = client
         .embed(documents)
@@ -315,7 +315,7 @@ async fn build_rag_index(
 async fn search(
     client: &Client,
     query: &str,
-    index: &[Vec<f64>],
+    index: &[Vec<f32>],
 ) -> Result<Vec<usize>, Box<dyn std::error::Error>> {
     // Embed query with same settings
     let query_embed = client
@@ -330,7 +330,7 @@ async fn search(
     let query_vec = query_embed.embedding(0).unwrap();
 
     // Find nearest neighbors
-    let mut scored: Vec<(usize, f64)> = index
+    let mut scored: Vec<(usize, f32)> = index
         .iter()
         .enumerate()
         .map(|(i, doc_vec)| {

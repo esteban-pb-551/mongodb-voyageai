@@ -8,7 +8,7 @@ use crate::usage::Usage;
 /// A single embedding within a document result.
 #[derive(Debug, Clone, Deserialize)]
 struct EmbeddingData {
-    embedding: Vec<f64>,
+    embedding: Vec<f32>,
     #[allow(dead_code)]
     index: usize,
 }
@@ -30,7 +30,7 @@ pub struct ContextualizedEmbeddingsResult {
 
 impl ContextualizedEmbeddingsResult {
     /// Returns the embeddings as a vector of vectors.
-    pub fn embeddings(&self) -> Vec<Vec<f64>> {
+    pub fn embeddings(&self) -> Vec<Vec<f32>> {
         self.data.iter().map(|d| d.embedding.clone()).collect()
     }
 }
@@ -167,7 +167,7 @@ impl fmt::Display for ContextualizedEmbed {
 /// # Examples
 ///
 /// ```rust
-/// use mongodb_voyageai::client::ContextualizedEmbedInput;
+/// use mongodb_voyageai::context::ContextualizedEmbedInput;
 /// use mongodb_voyageai::OutputDtype;
 ///
 /// let input = ContextualizedEmbedInput {

@@ -19,7 +19,7 @@ struct RerankResponse {
 ///
 /// # Example
 ///
-/// ```rust
+/// ```rust,no_run
 #[doc = include_str!("../examples/rerank-documents.rs")]
 /// ```
 #[derive(Debug, Clone)]

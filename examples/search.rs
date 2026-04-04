@@ -19,18 +19,18 @@ use mongodb_voyageai::{Client, model};
 /// A document paired with its pre-computed embedding vector.
 struct Entry {
     document: String,
-    embedding: Vec<f64>,
+    embedding: Vec<f32>,
 }
 
 /// Computes the Euclidean (L2) distance between two vectors.
 ///
 /// Lower values mean the vectors are closer in the embedding space,
 /// i.e. the texts are semantically more similar.
-fn euclidean_distance(src: &[f64], dst: &[f64]) -> f64 {
+fn euclidean_distance(src: &[f32], dst: &[f32]) -> f32 {
     src.iter()
         .zip(dst)
         .map(|(a, b)| (a - b).powi(2))
-        .sum::<f64>()
+        .sum::<f32>()
         .sqrt()
 }
 

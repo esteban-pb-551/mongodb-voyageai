@@ -40,7 +40,7 @@ pub struct Reranking {
     /// The document text, if returned by the API.
     pub document: Option<String>,
     /// Relevance score between 0.0 and 1.0 (higher is more relevant).
-    pub relevance_score: f64,
+    pub relevance_score: f32,
 }
 
 impl fmt::Display for Reranking {
@@ -118,11 +118,11 @@ mod tests {
         let r = Reranking {
             index: 3,
             document: None,
-            relevance_score: 0.87654321,
+            relevance_score: 0.8765432,
         };
         let s = format!("{r}");
         assert!(s.contains("index: 3"));
-        assert!(s.contains("0.87654321"));
+        assert!(s.contains("0.8765432"));
     }
 
     #[test]
