@@ -487,7 +487,7 @@ fn bench_normalize(c: &mut Criterion) {
     let mut group = c.benchmark_group("normalize");
 
     let dirty_text = "  Hello,\r\n\n\n  world!  \t This   has \r\n extra   whitespace.\n\n\
-        And   multiple\r\n\r\nparagraphs   with  «special»  "quotes"  and  em—dashes.\n\
+        And   multiple\r\n\r\nparagraphs   with  \u{00AB}special\u{00BB}  \u{201C}quotes\u{201D}  and  em\u{2014}dashes.\n\
         Check https://example.com/path?q=test for more info.\n\
         Some hy-\nphenated words across line breaks.  ";
 
