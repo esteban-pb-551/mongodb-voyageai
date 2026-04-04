@@ -1,5 +1,3 @@
-# mongodb-voyageai
-
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE.txt)
 [![Crates.io](https://img.shields.io/crates/v/mongodb-voyageai)](https://crates.io/crates/mongodb-voyageai)
 [![docs.rs](https://img.shields.io/docsrs/mongodb-voyageai)](https://docs.rs/mongodb-voyageai)
